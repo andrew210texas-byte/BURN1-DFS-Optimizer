@@ -10,6 +10,7 @@ class Player:
     opponent: str
     salary: int
 
+    status: str = ""
     projection: float = 0.0
     ceiling: float = 0.0
     ownership: float = 0.0
