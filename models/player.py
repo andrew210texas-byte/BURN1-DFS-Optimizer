@@ -10,6 +10,9 @@ class Player:
     opponent: str
     salary: int
 
+    player_id: str = ""
+    roster_positions: tuple[str, ...] = ()
+
     status: str = ""
     projection: float = 0.0
     ceiling: float = 0.0

@@ -4,12 +4,15 @@ from models.player import Player
 
 
 def load_fanduel_players(csv_path):
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(
+        csv_path,
+        dtype={"Id": str},
+    )
 
     players = []
 
     for _, row in df.iterrows():
-        position = row["Position"]
+        position = str(row["Position"])
 
         if position == "D":
             position = "DST"
@@ -19,13 +22,28 @@ def load_fanduel_players(csv_path):
         else:
             projection = float(row["FPPG"])
 
+        raw_roster_positions = str(row["Roster Position"])
+
+        roster_positions = []
+
+        for roster_position in raw_roster_positions.split("/"):
+            roster_position = roster_position.strip()
+
+            if roster_position == "DEF":
+                roster_position = "DST"
+
+            if roster_position:
+                roster_positions.append(roster_position)
+
         player = Player(
-            name=row["Nickname"],
+            name=str(row["Nickname"]),
             site="FanDuel",
             position=position,
-            team=row["Team"],
-            opponent=row["Opponent"],
+            team=str(row["Team"]),
+            opponent=str(row["Opponent"]),
             salary=int(row["Salary"]),
+            player_id=str(row["Id"]),
+            roster_positions=tuple(roster_positions),
             status=(
                 ""
                 if pd.isna(row["Injury Indicator"])

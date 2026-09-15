@@ -4,7 +4,10 @@ from models.player import Player
 
 
 def load_draftkings_players(csv_path):
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(
+        csv_path,
+        dtype={"ID": str},
+    )
 
     players = []
 
@@ -20,8 +23,10 @@ def load_draftkings_players(csv_path):
 
             if row["TeamAbbrev"] == away_team:
                 opponent = home_team
-            else:
+            elif row["TeamAbbrev"] == home_team:
                 opponent = away_team
+            else:
+                opponent = ""
         else:
             opponent = ""
 
@@ -30,13 +35,23 @@ def load_draftkings_players(csv_path):
         else:
             projection = float(row["AvgPointsPerGame"])
 
+        raw_roster_positions = str(row["Roster Position"])
+
+        roster_positions = tuple(
+            position.strip()
+            for position in raw_roster_positions.split("/")
+            if position.strip()
+        )
+
         player = Player(
-            name=row["Name"],
+            name=str(row["Name"]),
             site="DraftKings",
-            position=row["Position"],
-            team=row["TeamAbbrev"],
+            position=str(row["Position"]),
+            team=str(row["TeamAbbrev"]),
             opponent=opponent,
             salary=int(row["Salary"]),
+            player_id=str(row["ID"]),
+            roster_positions=roster_positions,
             status="" if pd.isna(row["Status"]) else str(row["Status"]),
             projection=projection,
         )
