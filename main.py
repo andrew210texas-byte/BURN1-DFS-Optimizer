@@ -1,5 +1,6 @@
 from data.draftkings_loader import load_draftkings_players
 from data.fanduel_loader import load_fanduel_players
+from optimizer.lineup_optimizer import optimize_nfl_lineup
 
 
 draftkings_players = load_draftkings_players(
@@ -11,52 +12,72 @@ fanduel_players = load_fanduel_players(
 )
 
 
-def print_player_pool(site_name, players):
-    print(f"{site_name} NFL Player Pool")
-    print(f"Players loaded: {len(players)}")
+def print_lineup(site_name, lineup, salary_cap):
+    if not lineup:
+        print(f"No valid {site_name} lineup found.")
+        print()
+        return
 
-    unavailable_players = [
-        player for player in players
-        if player.status.upper() in {"OUT", "IR"}
-    ]
+    position_order = {
+        "QB": 1,
+        "RB": 2,
+        "WR": 3,
+        "TE": 4,
+        "DST": 5,
+    }
 
-    questionable_players = [
-        player for player in players
-        if player.status.upper() in {"Q", "D"}
-    ]
+    lineup = sorted(
+        lineup,
+        key=lambda player: position_order.get(player.position, 99)
+    )
 
-    print(f"Unavailable (OUT/IR): {len(unavailable_players)}")
-    print(f"Questionable/Doubtful: {len(questionable_players)}")
-    print()
+    total_salary = sum(player.salary for player in lineup)
+    total_projection = sum(player.projection for player in lineup)
 
-    positions = {}
+    print(f"{site_name} Optimized NFL Lineup")
+    print("-" * 70)
 
-    for player in players:
-        if player.position not in positions:
-            positions[player.position] = 0
-
-        positions[player.position] += 1
-
-    for position, count in positions.items():
-        print(f"{position}: {count}")
-
-    print()
-    print("First 10 players:")
-    print()
-
-    for player in players[:10]:
+    for player in lineup:
         print(
-            f"{player.name} | "
-            f"{player.position} | "
-            f"{player.team} vs {player.opponent} | "
-            f"${player.salary:,}"
+            f"{player.position:<3} | "
+            f"{player.name:<25} | "
+            f"{player.team} vs {player.opponent:<3} | "
+            f"${player.salary:>5,} | "
+            f"{player.projection:>6.2f} pts"
         )
 
+    print("-" * 70)
+    print(f"Players:          {len(lineup)}")
+    print(f"Total Salary:     ${total_salary:,}")
+    print(f"Salary Remaining: ${salary_cap - total_salary:,}")
+    print(f"Total Points:     {total_projection:.2f}")
     print()
 
 
-print("DFS Optimizer")
+draftkings_lineup = optimize_nfl_lineup(
+    draftkings_players,
+    salary_cap=50000,
+)
+
+fanduel_lineup = optimize_nfl_lineup(
+    fanduel_players,
+    salary_cap=60000,
+)
+
+
+print()
+print("DFS OPTIMIZER")
+print("=" * 70)
 print()
 
-print_player_pool("DraftKings", draftkings_players)
-print_player_pool("FanDuel", fanduel_players)
+print_lineup(
+    "DraftKings",
+    draftkings_lineup,
+    salary_cap=50000,
+)
+
+print_lineup(
+    "FanDuel",
+    fanduel_lineup,
+    salary_cap=60000,
+)

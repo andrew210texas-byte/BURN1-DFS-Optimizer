@@ -25,15 +25,21 @@ def load_draftkings_players(csv_path):
         else:
             opponent = ""
 
+        if pd.isna(row["AvgPointsPerGame"]):
+            projection = 0.0
+        else:
+            projection = float(row["AvgPointsPerGame"])
+
         player = Player(
-    name=row["Name"],
-    site="DraftKings",
-    position=row["Position"],
-    team=row["TeamAbbrev"],
-    opponent=opponent,
-    salary=int(row["Salary"]),
-    status="" if pd.isna(row["Status"]) else str(row["Status"]),
-)
+            name=row["Name"],
+            site="DraftKings",
+            position=row["Position"],
+            team=row["TeamAbbrev"],
+            opponent=opponent,
+            salary=int(row["Salary"]),
+            status="" if pd.isna(row["Status"]) else str(row["Status"]),
+            projection=projection,
+        )
 
         players.append(player)
 

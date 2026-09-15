@@ -14,19 +14,25 @@ def load_fanduel_players(csv_path):
         if position == "D":
             position = "DST"
 
+        if pd.isna(row["FPPG"]):
+            projection = 0.0
+        else:
+            projection = float(row["FPPG"])
+
         player = Player(
-    name=row["Nickname"],
-    site="FanDuel",
-    position=position,
-    team=row["Team"],
-    opponent=row["Opponent"],
-    salary=int(row["Salary"]),
-    status=(
-        ""
-        if pd.isna(row["Injury Indicator"])
-        else str(row["Injury Indicator"])
-    ),
-)
+            name=row["Nickname"],
+            site="FanDuel",
+            position=position,
+            team=row["Team"],
+            opponent=row["Opponent"],
+            salary=int(row["Salary"]),
+            status=(
+                ""
+                if pd.isna(row["Injury Indicator"])
+                else str(row["Injury Indicator"])
+            ),
+            projection=projection,
+        )
 
         players.append(player)
 
