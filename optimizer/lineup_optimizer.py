@@ -24,23 +24,27 @@ def optimize_nfl_lineup(players, salary_cap):
         "DST",
     ]
 
-    slot_eligibility = {
-        "QB": {"QB"},
-        "RB1": {"RB"},
-        "RB2": {"RB"},
-        "WR1": {"WR"},
-        "WR2": {"WR"},
-        "WR3": {"WR"},
-        "TE": {"TE"},
-        "FLEX": {"RB", "WR", "TE"},
-        "DST": {"DST"},
+    # Map our numbered optimizer slots to the site's normalized
+    # roster-position names stored on each Player.
+    slot_position = {
+        "QB": "QB",
+        "RB1": "RB",
+        "RB2": "RB",
+        "WR1": "WR",
+        "WR2": "WR",
+        "WR3": "WR",
+        "TE": "TE",
+        "FLEX": "FLEX",
+        "DST": "DST",
     }
 
     selected = {}
 
     for player_index, player in enumerate(eligible_players):
         for slot in roster_slots:
-            if player.position in slot_eligibility[slot]:
+            required_position = slot_position[slot]
+
+            if required_position in player.roster_positions:
                 selected[player_index, slot] = model.new_bool_var(
                     f"player_{player_index}_{slot}"
                 )
