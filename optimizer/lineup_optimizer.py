@@ -1,5 +1,7 @@
 from ortools.sat.python import cp_model
 
+from models.lineup_player import LineupPlayer
+
 
 def optimize_nfl_lineup(players, salary_cap):
     eligible_players = [
@@ -10,132 +12,86 @@ def optimize_nfl_lineup(players, salary_cap):
 
     model = cp_model.CpModel()
 
+    roster_slots = [
+        "QB",
+        "RB1",
+        "RB2",
+        "WR1",
+        "WR2",
+        "WR3",
+        "TE",
+        "FLEX",
+        "DST",
+    ]
+
+    slot_eligibility = {
+        "QB": {"QB"},
+        "RB1": {"RB"},
+        "RB2": {"RB"},
+        "WR1": {"WR"},
+        "WR2": {"WR"},
+        "WR3": {"WR"},
+        "TE": {"TE"},
+        "FLEX": {"RB", "WR", "TE"},
+        "DST": {"DST"},
+    }
+
     selected = {}
 
-    for index, player in enumerate(eligible_players):
-        selected[index] = model.new_bool_var(f"player_{index}")
+    for player_index, player in enumerate(eligible_players):
+        for slot in roster_slots:
+            if player.position in slot_eligibility[slot]:
+                selected[player_index, slot] = model.new_bool_var(
+                    f"player_{player_index}_{slot}"
+                )
 
-    # Exactly 9 players in an NFL lineup.
-    model.add(
-        sum(selected.values()) == 9
-    )
+    # Every roster slot must contain exactly one player.
+    for slot in roster_slots:
+        model.add(
+            sum(
+                selected[player_index, slot]
+                for player_index, player in enumerate(eligible_players)
+                if (player_index, slot) in selected
+            )
+            == 1
+        )
 
-    # Salary cap.
+    # A player can only appear once in a lineup.
+    for player_index, player in enumerate(eligible_players):
+        model.add(
+            sum(
+                selected[player_index, slot]
+                for slot in roster_slots
+                if (player_index, slot) in selected
+            )
+            <= 1
+        )
+
+    # Total salary cannot exceed the site's salary cap.
     model.add(
         sum(
-            selected[index] * player.salary
-            for index, player in enumerate(eligible_players)
+            selected[player_index, slot] * player.salary
+            for player_index, player in enumerate(eligible_players)
+            for slot in roster_slots
+            if (player_index, slot) in selected
         )
         <= salary_cap
     )
 
-    # Exactly 1 quarterback.
-    model.add(
-        sum(
-            selected[index]
-            for index, player in enumerate(eligible_players)
-            if player.position == "QB"
-        )
-        == 1
-    )
-
-    # Exactly 1 defense/special teams.
-    model.add(
-        sum(
-            selected[index]
-            for index, player in enumerate(eligible_players)
-            if player.position == "DST"
-        )
-        == 1
-    )
-
-    # Running backs:
-    # 2 required + possibly 1 FLEX.
-    model.add(
-        sum(
-            selected[index]
-            for index, player in enumerate(eligible_players)
-            if player.position == "RB"
-        )
-        >= 2
-    )
-
-    model.add(
-        sum(
-            selected[index]
-            for index, player in enumerate(eligible_players)
-            if player.position == "RB"
-        )
-        <= 3
-    )
-
-    # Wide receivers:
-    # 3 required + possibly 1 FLEX.
-    model.add(
-        sum(
-            selected[index]
-            for index, player in enumerate(eligible_players)
-            if player.position == "WR"
-        )
-        >= 3
-    )
-
-    model.add(
-        sum(
-            selected[index]
-            for index, player in enumerate(eligible_players)
-            if player.position == "WR"
-        )
-        <= 4
-    )
-
-    # Tight ends:
-    # 1 required + possibly 1 FLEX.
-    model.add(
-        sum(
-            selected[index]
-            for index, player in enumerate(eligible_players)
-            if player.position == "TE"
-        )
-        >= 1
-    )
-
-    model.add(
-        sum(
-            selected[index]
-            for index, player in enumerate(eligible_players)
-            if player.position == "TE"
-        )
-        <= 2
-    )
-
-    # RB + WR + TE must total exactly 7.
-    # This accounts for:
-    # 2 RB + 3 WR + 1 TE + 1 FLEX.
-    model.add(
-        sum(
-            selected[index]
-            for index, player in enumerate(eligible_players)
-            if player.position in {"RB", "WR", "TE"}
-        )
-        == 7
-    )
-
-    # CP-SAT works with integers.
-    # Multiply projections by 100 so decimal fantasy points
-    # can be optimized as integers.
+    # CP-SAT optimizes integers, so scale decimal fantasy points by 100.
     projection_scale = 100
 
     model.maximize(
         sum(
-            selected[index]
+            selected[player_index, slot]
             * int(round(player.projection * projection_scale))
-            for index, player in enumerate(eligible_players)
+            for player_index, player in enumerate(eligible_players)
+            for slot in roster_slots
+            if (player_index, slot) in selected
         )
     )
 
     solver = cp_model.CpSolver()
-
     status = solver.solve(model)
 
     if status not in {
@@ -146,8 +102,26 @@ def optimize_nfl_lineup(players, salary_cap):
 
     lineup = []
 
-    for index, player in enumerate(eligible_players):
-        if solver.value(selected[index]) == 1:
-            lineup.append(player)
+    for slot in roster_slots:
+        for player_index, player in enumerate(eligible_players):
+            if (player_index, slot) not in selected:
+                continue
+
+            if solver.value(selected[player_index, slot]) == 1:
+                display_slot = slot
+
+                if slot in {"RB1", "RB2"}:
+                    display_slot = "RB"
+                elif slot in {"WR1", "WR2", "WR3"}:
+                    display_slot = "WR"
+
+                lineup.append(
+                    LineupPlayer(
+                        roster_slot=display_slot,
+                        player=player,
+                    )
+                )
+
+                break
 
     return lineup

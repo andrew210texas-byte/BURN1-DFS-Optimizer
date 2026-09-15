@@ -18,35 +18,32 @@ def print_lineup(site_name, lineup, salary_cap):
         print()
         return
 
-    position_order = {
-        "QB": 1,
-        "RB": 2,
-        "WR": 3,
-        "TE": 4,
-        "DST": 5,
-    }
-
-    lineup = sorted(
-        lineup,
-        key=lambda player: position_order.get(player.position, 99)
+    total_salary = sum(
+        lineup_player.player.salary
+        for lineup_player in lineup
     )
 
-    total_salary = sum(player.salary for player in lineup)
-    total_projection = sum(player.projection for player in lineup)
+    total_projection = sum(
+        lineup_player.player.projection
+        for lineup_player in lineup
+    )
 
     print(f"{site_name} Optimized NFL Lineup")
-    print("-" * 70)
+    print("-" * 78)
 
-    for player in lineup:
+    for lineup_player in lineup:
+        player = lineup_player.player
+        roster_slot = lineup_player.roster_slot
+
         print(
-            f"{player.position:<3} | "
+            f"{roster_slot:<4} | "
             f"{player.name:<25} | "
             f"{player.team} vs {player.opponent:<3} | "
             f"${player.salary:>5,} | "
             f"{player.projection:>6.2f} pts"
         )
 
-    print("-" * 70)
+    print("-" * 78)
     print(f"Players:          {len(lineup)}")
     print(f"Total Salary:     ${total_salary:,}")
     print(f"Salary Remaining: ${salary_cap - total_salary:,}")
@@ -67,17 +64,17 @@ fanduel_lineup = optimize_nfl_lineup(
 
 print()
 print("DFS OPTIMIZER")
-print("=" * 70)
+print("=" * 78)
 print()
 
 print_lineup(
-    "DraftKings",
+    "DK",
     draftkings_lineup,
     salary_cap=50000,
 )
 
 print_lineup(
-    "FanDuel",
+    "FD",
     fanduel_lineup,
     salary_cap=60000,
 )
