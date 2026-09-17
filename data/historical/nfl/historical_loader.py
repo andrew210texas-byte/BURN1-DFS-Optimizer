@@ -34,7 +34,7 @@ def load_offensive_player_stats(season):
 
     print(f"\nLoading {season} NFL player statistics...")
 
-    # Download/load player statistics for the requested NFL season.
+    # Load player statistics for the requested NFL season.
     data = nfl.load_player_stats([season])
 
     # Keep only regular-season games.
@@ -66,9 +66,47 @@ def validate_player_game_uniqueness(data):
         )
 
 
+def load_team_stats(season):
+    """Load regular-season team-game statistics for the DST model."""
+
+    print(f"\nLoading {season} NFL team statistics...")
+
+    # Load team-level statistics for the requested NFL season.
+    data = nfl.load_team_stats([season])
+
+    # Keep only regular-season games.
+    data = data.filter(pl.col("season_type") == "REG")
+
+    print(f"Loaded {data.height:,} team-game records.")
+
+    return data
+
+
+def validate_team_game_uniqueness(data):
+    """Make sure each NFL team has only one record per game."""
+
+    duplicates = (
+        data.group_by(["team", "season", "week", "game_id"])
+        .len()
+        .filter(pl.col("len") > 1)
+    )
+
+    if duplicates.height == 0:
+        print("Team-game uniqueness check: PASSED")
+    else:
+        raise ValueError(
+            f"Team-game uniqueness check FAILED: "
+            f"{duplicates.height} duplicate records found."
+        )
+
+
 if __name__ == "__main__":
     verify_directories()
 
+    # Load and validate individual offensive player-game data.
     player_stats = load_offensive_player_stats(2025)
-
     validate_player_game_uniqueness(player_stats)
+
+    # Load and validate team-game data for defense/special teams.
+    team_stats = load_team_stats(2025)
+    validate_team_game_uniqueness(team_stats)
