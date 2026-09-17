@@ -1,4 +1,7 @@
 .venv/
 __pycache__/
 *.pyc
+
 data/salaries/
+data/historical/nfl/raw/
+data/historical/nfl/processed/
