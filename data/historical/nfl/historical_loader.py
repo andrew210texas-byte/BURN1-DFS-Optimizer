@@ -342,6 +342,103 @@ def validate_team_game_context(context, schedule_data):
     print("Team-game context validation: PASSED")
 
 
+def build_offensive_player_games(player_stats, team_game_context):
+    """Join offensive player-game statistics to pregame team-game context."""
+
+    print("\nBuilding offensive player-game modeling dataset...")
+
+    # We only need the context fields that do not already exist
+    # in the player-statistics dataset.
+    context_columns = team_game_context.select(
+        [
+            "game_id",
+            "team",
+            "gameday",
+            "gametime",
+            "opponent",
+            "is_home",
+            "is_neutral",
+            "team_rest",
+            "opponent_rest",
+            "rest_differential",
+            "team_moneyline",
+            "opponent_moneyline",
+            "team_spread",
+            "total_line",
+            "team_implied_points",
+            "opponent_implied_points",
+            "roof",
+            "surface",
+            "temp",
+            "wind",
+        ]
+    )
+
+    # Match every player-game to the context for that player's team
+    # in that exact NFL game.
+    player_games = player_stats.join(
+        context_columns,
+        on=["game_id", "team"],
+        how="left",
+    )
+
+    # Sort by season/week/game/team/player so the output is easy to inspect.
+    player_games = player_games.sort(
+        ["season", "week", "game_id", "team", "player_id"]
+    )
+
+    print(
+        f"Built {player_games.height:,} enriched "
+        f"offensive player-game records."
+    )
+
+    return player_games
+
+
+def validate_offensive_player_games(player_stats, player_games):
+    """Make sure the context join did not lose, add, or duplicate players."""
+
+    # A left join should preserve the exact number of offensive player rows.
+    if player_games.height != player_stats.height:
+        raise ValueError(
+            "Offensive player-game row-count check FAILED: "
+            f"expected {player_stats.height}, found {player_games.height}."
+        )
+
+    # Each player should still have only one row for each NFL game.
+    duplicates = (
+        player_games.group_by(
+            ["player_id", "season", "week", "game_id"]
+        )
+        .len()
+        .filter(pl.col("len") > 1)
+    )
+
+    if duplicates.height > 0:
+        raise ValueError(
+            "Offensive player-game uniqueness check FAILED: "
+            f"{duplicates.height} duplicate player-game records found."
+        )
+
+    # If the join worked, every player row should have an opponent.
+    # The opponent field comes directly from our team-game context table,
+    # so a null opponent would indicate that the context join failed.
+    missing_context = player_games.filter(
+        pl.col("opponent").is_null()
+    )
+
+    if missing_context.height > 0:
+        raise ValueError(
+            "Offensive player-game context check FAILED: "
+            f"{missing_context.height} player-game records "
+            f"have no matching context."
+        )
+
+    print("Offensive player-game row-count check: PASSED")
+    print("Offensive player-game uniqueness check: PASSED")
+    print("Offensive player-game context check: PASSED")
+
+
 if __name__ == "__main__":
     verify_directories()
 
@@ -364,8 +461,27 @@ if __name__ == "__main__":
     team_game_context = build_team_game_context(schedule_data)
     validate_team_game_context(team_game_context, schedule_data)
 
-    # Save the first model-ready processed dataset.
+    # Save the processed team-game context dataset.
     save_processed_dataset(
         team_game_context,
         "team_game_context_2025.parquet",
+    )
+
+    # Join every offensive player-game to its team's game context.
+    offensive_player_games = build_offensive_player_games(
+        player_stats,
+        team_game_context,
+    )
+
+    # Verify that the join preserved all 6,037 player-game records
+    # without creating duplicates or leaving unmatched context.
+    validate_offensive_player_games(
+        player_stats,
+        offensive_player_games,
+    )
+
+    # Save the completed Step 5 player modeling dataset.
+    save_processed_dataset(
+        offensive_player_games,
+        "offensive_player_games_2025.parquet",
     )
