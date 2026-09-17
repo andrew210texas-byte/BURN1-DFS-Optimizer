@@ -29,19 +29,38 @@ def verify_directories():
     print(f"Processed directory exists: {PROCESSED_DIR.exists()}")
 
 
+def save_raw_dataset(data, filename):
+    """Save an untouched source dataset as a Parquet file."""
+
+    output_path = RAW_DIR / filename
+
+    data.write_parquet(output_path)
+
+    print(f"Saved raw dataset: {output_path.name}")
+
+    return output_path
+
+
 def load_offensive_player_stats(season):
-    """Load regular-season QB, RB, WR, and TE player-game statistics."""
+    """Load raw player data and return regular-season QB/RB/WR/TE records."""
 
     print(f"\nLoading {season} NFL player statistics...")
 
-    # Load player statistics for the requested NFL season.
-    data = nfl.load_player_stats([season])
+    # Load the complete source dataset before applying DFS-specific filters.
+    raw_data = nfl.load_player_stats([season])
 
-    # Keep only regular-season games.
-    data = data.filter(pl.col("season_type") == "REG")
+    # Preserve the complete source dataset exactly as loaded.
+    save_raw_dataset(
+        raw_data,
+        f"player_stats_{season}.parquet",
+    )
 
-    # Keep only the offensive positions used by our DFS player model.
-    data = data.filter(pl.col("position").is_in(OFFENSIVE_POSITIONS))
+    # Create a filtered dataset for our offensive DFS model.
+    data = raw_data.filter(pl.col("season_type") == "REG")
+
+    data = data.filter(
+        pl.col("position").is_in(OFFENSIVE_POSITIONS)
+    )
 
     print(f"Loaded {data.height:,} offensive player-game records.")
 
@@ -67,15 +86,21 @@ def validate_player_game_uniqueness(data):
 
 
 def load_team_stats(season):
-    """Load regular-season team-game statistics for the DST model."""
+    """Load raw team data and return regular-season team-game records."""
 
     print(f"\nLoading {season} NFL team statistics...")
 
-    # Load team-level statistics for the requested NFL season.
-    data = nfl.load_team_stats([season])
+    # Load the complete source team dataset.
+    raw_data = nfl.load_team_stats([season])
 
-    # Keep only regular-season games.
-    data = data.filter(pl.col("season_type") == "REG")
+    # Preserve the complete source dataset before filtering.
+    save_raw_dataset(
+        raw_data,
+        f"team_stats_{season}.parquet",
+    )
+
+    # Create the regular-season team dataset used by the DST model.
+    data = raw_data.filter(pl.col("season_type") == "REG")
 
     print(f"Loaded {data.height:,} team-game records.")
 
@@ -101,15 +126,21 @@ def validate_team_game_uniqueness(data):
 
 
 def load_schedule_data(season):
-    """Load regular-season schedule, results, and game-environment data."""
+    """Load raw schedule data and return regular-season games."""
 
     print(f"\nLoading {season} NFL schedule data...")
 
-    # Load schedule and game information for the requested season.
-    data = nfl.load_schedules([season])
+    # Load the complete schedule/results/environment dataset.
+    raw_data = nfl.load_schedules([season])
 
-    # Keep only regular-season games.
-    data = data.filter(pl.col("game_type") == "REG")
+    # Preserve the complete source dataset before filtering.
+    save_raw_dataset(
+        raw_data,
+        f"schedules_{season}.parquet",
+    )
+
+    # Create the regular-season schedule dataset used by our pipeline.
+    data = raw_data.filter(pl.col("game_type") == "REG")
 
     print(f"Loaded {data.height:,} regular-season games.")
 
@@ -172,15 +203,15 @@ def validate_team_schedule_matches(team_stats, schedule_data):
 if __name__ == "__main__":
     verify_directories()
 
-    # Load and validate individual offensive player-game data.
+    # Load, preserve, and validate individual offensive player-game data.
     player_stats = load_offensive_player_stats(2025)
     validate_player_game_uniqueness(player_stats)
 
-    # Load and validate team-game data for defense/special teams.
+    # Load, preserve, and validate team-game data for defense/special teams.
     team_stats = load_team_stats(2025)
     validate_team_game_uniqueness(team_stats)
 
-    # Load and validate schedule/results/game-environment data.
+    # Load, preserve, and validate schedule/results/game-environment data.
     schedule_data = load_schedule_data(2025)
     validate_schedule_uniqueness(schedule_data)
 
