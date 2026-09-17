@@ -41,6 +41,18 @@ def save_raw_dataset(data, filename):
     return output_path
 
 
+def save_processed_dataset(data, filename):
+    """Save a cleaned/model-ready dataset as a Parquet file."""
+
+    output_path = PROCESSED_DIR / filename
+
+    data.write_parquet(output_path)
+
+    print(f"Saved processed dataset: {output_path.name}")
+
+    return output_path
+
+
 def load_offensive_player_stats(season):
     """Load raw player data and return regular-season QB/RB/WR/TE records."""
 
@@ -200,6 +212,136 @@ def validate_team_schedule_matches(team_stats, schedule_data):
         )
 
 
+def build_team_game_context(schedule_data):
+    """Convert one schedule row per game into one context row per team."""
+
+    print("\nBuilding team-game context dataset...")
+
+    # Build the away-team perspective of every game.
+    away_context = schedule_data.select(
+        [
+            "game_id",
+            "season",
+            "week",
+            "gameday",
+            "gametime",
+            pl.col("away_team").alias("team"),
+            pl.col("home_team").alias("opponent"),
+            pl.lit(False).alias("is_home"),
+            (pl.col("location") == "Neutral").alias("is_neutral"),
+            pl.col("away_rest").alias("team_rest"),
+            pl.col("home_rest").alias("opponent_rest"),
+            (
+                pl.col("away_rest") - pl.col("home_rest")
+            ).alias("rest_differential"),
+            pl.col("away_moneyline").alias("team_moneyline"),
+            pl.col("home_moneyline").alias("opponent_moneyline"),
+            pl.col("spread_line").alias("team_spread"),
+            "total_line",
+            (
+                (pl.col("total_line") - pl.col("spread_line")) / 2
+            ).alias("team_implied_points"),
+            (
+                (pl.col("total_line") + pl.col("spread_line")) / 2
+            ).alias("opponent_implied_points"),
+            "roof",
+            "surface",
+            "temp",
+            "wind",
+        ]
+    )
+
+    # Build the home-team perspective of every game.
+    home_context = schedule_data.select(
+        [
+            "game_id",
+            "season",
+            "week",
+            "gameday",
+            "gametime",
+            pl.col("home_team").alias("team"),
+            pl.col("away_team").alias("opponent"),
+            pl.lit(True).alias("is_home"),
+            (pl.col("location") == "Neutral").alias("is_neutral"),
+            pl.col("home_rest").alias("team_rest"),
+            pl.col("away_rest").alias("opponent_rest"),
+            (
+                pl.col("home_rest") - pl.col("away_rest")
+            ).alias("rest_differential"),
+            pl.col("home_moneyline").alias("team_moneyline"),
+            pl.col("away_moneyline").alias("opponent_moneyline"),
+            (-pl.col("spread_line")).alias("team_spread"),
+            "total_line",
+            (
+                (pl.col("total_line") + pl.col("spread_line")) / 2
+            ).alias("team_implied_points"),
+            (
+                (pl.col("total_line") - pl.col("spread_line")) / 2
+            ).alias("opponent_implied_points"),
+            "roof",
+            "surface",
+            "temp",
+            "wind",
+        ]
+    )
+
+    # Stack the two perspectives into one team-game dataset.
+    context = pl.concat(
+        [away_context, home_context],
+        how="vertical",
+    )
+
+    # Sort it so the dataset is easy for us to inspect.
+    context = context.sort(
+        ["season", "week", "game_id", "team"]
+    )
+
+    print(f"Built {context.height:,} team-game context records.")
+
+    return context
+
+
+def validate_team_game_context(context, schedule_data):
+    """Validate the structure and implied-point math of the context table."""
+
+    expected_rows = schedule_data.height * 2
+
+    if context.height != expected_rows:
+        raise ValueError(
+            "Team-game context row-count check FAILED: "
+            f"expected {expected_rows}, found {context.height}."
+        )
+
+    duplicates = (
+        context.group_by(["game_id", "team"])
+        .len()
+        .filter(pl.col("len") > 1)
+    )
+
+    if duplicates.height > 0:
+        raise ValueError(
+            "Team-game context uniqueness check FAILED: "
+            f"{duplicates.height} duplicate team-game records found."
+        )
+
+    bad_totals = context.filter(
+        (
+            pl.col("team_implied_points")
+            + pl.col("opponent_implied_points")
+            - pl.col("total_line")
+        ).abs()
+        > 0.001
+    )
+
+    if bad_totals.height > 0:
+        raise ValueError(
+            "Implied-points validation FAILED: "
+            f"{bad_totals.height} rows do not equal the game total."
+        )
+
+    print("Team-game context validation: PASSED")
+
+
 if __name__ == "__main__":
     verify_directories()
 
@@ -217,3 +359,13 @@ if __name__ == "__main__":
 
     # Verify that team statistics connect correctly to scheduled games.
     validate_team_schedule_matches(team_stats, schedule_data)
+
+    # Build and validate one pregame-context record per NFL team per game.
+    team_game_context = build_team_game_context(schedule_data)
+    validate_team_game_context(team_game_context, schedule_data)
+
+    # Save the first model-ready processed dataset.
+    save_processed_dataset(
+        team_game_context,
+        "team_game_context_2025.parquet",
+    )
