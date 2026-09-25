@@ -5,3 +5,9 @@ __pycache__/
 data/salaries/
 data/historical/nfl/raw/
 data/historical/nfl/processed/
+
+data/historical/nfl/*.mp4
+data/historical/nfl/*.jpg
+data/historical/nfl/*.pdf
+data/historical/nfl/*.docx
+data/historical/nfl/*.html
