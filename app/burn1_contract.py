@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass, field
-from typing import Any
+from typing import Any, Callable
 
 from models.player import Player
 from optimizer.portfolio_optimizer import (
@@ -24,6 +24,12 @@ SUPPORTED_STRATEGIES = {
     "qb_vs_opposing_dst",
 }
 
+STATUS_VALIDATING = "validating"
+STATUS_STAGE1 = "stage1_generating"
+STATUS_STAGE2 = "stage2_optimizing"
+STATUS_COMPLETE = "complete"
+STATUS_ERROR = "error"
+
 
 @dataclass
 class Burn1PortfolioConfig:
@@ -46,6 +52,15 @@ class Burn1PortfolioConfig:
 
 
 @dataclass
+class Burn1StatusEvent:
+    status: str
+    message: str
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass
 class Burn1RunResult:
     status: str
     site: str
@@ -62,6 +77,59 @@ class Burn1RunResult:
 
     def to_dict(self):
         return asdict(self)
+
+
+@dataclass
+class Burn1ErrorResult:
+    code: str
+    stage: str
+    message: str
+    details: str = ""
+
+    def to_dict(self):
+        return asdict(self)
+
+
+@dataclass
+class Burn1ApplicationResponse:
+    ok: bool
+    status: str
+    result: Burn1RunResult | None = None
+    error: Burn1ErrorResult | None = None
+
+    def to_dict(self):
+        return asdict(self)
+
+
+class Burn1ApplicationError(ValueError):
+    def __init__(
+        self,
+        code,
+        stage,
+        message,
+        details="",
+    ):
+        super().__init__(message)
+        self.code = code
+        self.stage = stage
+        self.message = message
+        self.details = details
+
+
+def _emit_status(
+    status_callback: Callable[[Burn1StatusEvent], None] | None,
+    status,
+    message,
+):
+    if status_callback is None:
+        return
+
+    status_callback(
+        Burn1StatusEvent(
+            status=status,
+            message=message,
+        )
+    )
 
 
 def _validate_fraction_map(values, label):
@@ -310,15 +378,37 @@ def _build_strategy_summary(profiles):
 def run_burn1_nfl_portfolio(
     players: list[Player],
     config: Burn1PortfolioConfig,
+    status_callback: Callable[[Burn1StatusEvent], None] | None = None,
 ):
-    _validate_config(config)
+    _emit_status(
+        status_callback,
+        STATUS_VALIDATING,
+        "Validating BURN1 portfolio configuration.",
+    )
+
+    try:
+        _validate_config(config)
+    except ValueError as exc:
+        raise Burn1ApplicationError(
+            code="INVALID_CONFIGURATION",
+            stage=STATUS_VALIDATING,
+            message=str(exc),
+        ) from exc
 
     if not players:
-        raise ValueError(
-            "players cannot be empty."
+        raise Burn1ApplicationError(
+            code="EMPTY_PLAYER_POOL",
+            stage=STATUS_VALIDATING,
+            message="The player pool is empty.",
         )
 
     salary_cap = SUPPORTED_SITES[config.site]
+
+    _emit_status(
+        status_callback,
+        STATUS_STAGE1,
+        "Generating Stage 1 candidate lineups.",
+    )
 
     candidate_pool = generate_nfl_candidates(
         players,
@@ -332,23 +422,46 @@ def run_burn1_nfl_portfolio(
     )
 
     if candidate_pool.generated_count < config.lineup_count:
-        raise Stage2InfeasibleError(
-            "Stage 1 generated only "
-            f"{candidate_pool.generated_count} candidates, "
-            "which is fewer than the requested "
-            f"{config.lineup_count} final lineups."
+        raise Burn1ApplicationError(
+            code="STAGE1_INSUFFICIENT_CANDIDATES",
+            stage=STATUS_STAGE1,
+            message=(
+                "Stage 1 generated only "
+                f"{candidate_pool.generated_count} candidates, "
+                "which is fewer than the requested "
+                f"{config.lineup_count} final lineups."
+            ),
         )
 
-    selection = select_nfl_portfolio(
-        candidate_pool,
-        lineup_count=config.lineup_count,
-        min_exposures=config.min_player_exposures,
-        max_exposures=config.max_player_exposures,
-        locked_player_ids=config.locked_player_ids,
-        excluded_player_ids=config.excluded_player_ids,
-        min_strategy_exposures=config.min_strategy_exposures,
-        max_strategy_exposures=config.max_strategy_exposures,
+    _emit_status(
+        status_callback,
+        STATUS_STAGE2,
+        "Selecting the final Stage 2 portfolio.",
     )
+
+    try:
+        selection = select_nfl_portfolio(
+            candidate_pool,
+            lineup_count=config.lineup_count,
+            min_exposures=config.min_player_exposures,
+            max_exposures=config.max_player_exposures,
+            locked_player_ids=config.locked_player_ids,
+            excluded_player_ids=config.excluded_player_ids,
+            min_strategy_exposures=config.min_strategy_exposures,
+            max_strategy_exposures=config.max_strategy_exposures,
+        )
+    except Stage2InfeasibleError as exc:
+        raise Burn1ApplicationError(
+            code="STAGE2_INFEASIBLE",
+            stage=STATUS_STAGE2,
+            message=str(exc),
+        ) from exc
+    except ValueError as exc:
+        raise Burn1ApplicationError(
+            code="INVALID_STAGE2_CONSTRAINTS",
+            stage=STATUS_STAGE2,
+            message=str(exc),
+        ) from exc
 
     player_lookup = {
         player.player_id: player
@@ -363,8 +476,8 @@ def run_burn1_nfl_portfolio(
         )
     ]
 
-    return Burn1RunResult(
-        status="complete",
+    result = Burn1RunResult(
+        status=STATUS_COMPLETE,
         site=config.site,
         requested_lineups=config.lineup_count,
         generated_lineups=selection.selected_lineup_count,
@@ -385,3 +498,73 @@ def run_burn1_nfl_portfolio(
         ),
         message="BURN1 portfolio generation completed successfully.",
     )
+
+    _emit_status(
+        status_callback,
+        STATUS_COMPLETE,
+        result.message,
+    )
+
+    return result
+
+
+def run_burn1_nfl_portfolio_safe(
+    players: list[Player],
+    config: Burn1PortfolioConfig,
+    status_callback: Callable[[Burn1StatusEvent], None] | None = None,
+):
+    try:
+        result = run_burn1_nfl_portfolio(
+            players,
+            config,
+            status_callback=status_callback,
+        )
+
+        return Burn1ApplicationResponse(
+            ok=True,
+            status=STATUS_COMPLETE,
+            result=result,
+            error=None,
+        )
+
+    except Burn1ApplicationError as exc:
+        _emit_status(
+            status_callback,
+            STATUS_ERROR,
+            exc.message,
+        )
+
+        return Burn1ApplicationResponse(
+            ok=False,
+            status=STATUS_ERROR,
+            result=None,
+            error=Burn1ErrorResult(
+                code=exc.code,
+                stage=exc.stage,
+                message=exc.message,
+                details=exc.details,
+            ),
+        )
+
+    except Exception as exc:
+        message = (
+            "BURN1 encountered an unexpected internal error."
+        )
+
+        _emit_status(
+            status_callback,
+            STATUS_ERROR,
+            message,
+        )
+
+        return Burn1ApplicationResponse(
+            ok=False,
+            status=STATUS_ERROR,
+            result=None,
+            error=Burn1ErrorResult(
+                code="INTERNAL_ERROR",
+                stage="internal",
+                message=message,
+                details=str(exc),
+            ),
+        )

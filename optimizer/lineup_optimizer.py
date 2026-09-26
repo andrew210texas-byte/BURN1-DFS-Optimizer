@@ -19,6 +19,8 @@ def optimize_nfl_lineup(
     rb_dst_stack=False,
     excluded_lineups=None,
     min_unique_players=1,
+    solver_time_limit_seconds=None,
+    solver_relative_gap_limit=None,
 ):
     eligible_players = [
         player
@@ -114,6 +116,59 @@ def optimize_nfl_lineup(
             )
             <= 1
         )
+
+    # ==============================================================
+    # SYMMETRY BREAKING
+    # ==============================================================
+    #
+    # RB1/RB2 and WR1/WR2/WR3 are interchangeable roster labels.
+    # Force a stable player-index ordering so CP-SAT does not waste
+    # time proving equivalent slot permutations of the same lineup.
+
+    rb1_index = sum(
+        player_index
+        * selected[player_index, "RB1"]
+        for player_index, player in enumerate(
+            eligible_players
+        )
+        if (player_index, "RB1") in selected
+    )
+    rb2_index = sum(
+        player_index
+        * selected[player_index, "RB2"]
+        for player_index, player in enumerate(
+            eligible_players
+        )
+        if (player_index, "RB2") in selected
+    )
+    model.add(rb1_index < rb2_index)
+
+    wr1_index = sum(
+        player_index
+        * selected[player_index, "WR1"]
+        for player_index, player in enumerate(
+            eligible_players
+        )
+        if (player_index, "WR1") in selected
+    )
+    wr2_index = sum(
+        player_index
+        * selected[player_index, "WR2"]
+        for player_index, player in enumerate(
+            eligible_players
+        )
+        if (player_index, "WR2") in selected
+    )
+    wr3_index = sum(
+        player_index
+        * selected[player_index, "WR3"]
+        for player_index, player in enumerate(
+            eligible_players
+        )
+        if (player_index, "WR3") in selected
+    )
+    model.add(wr1_index < wr2_index)
+    model.add(wr2_index < wr3_index)
 
     # Build a simple "is this player used?" variable.
     used = {}
@@ -444,6 +499,24 @@ def optimize_nfl_lineup(
     )
 
     solver = cp_model.CpSolver()
+
+    if solver_time_limit_seconds is not None:
+        if solver_time_limit_seconds <= 0:
+            raise ValueError(
+                "solver_time_limit_seconds must be positive."
+            )
+        solver.parameters.max_time_in_seconds = (
+            solver_time_limit_seconds
+        )
+
+    if solver_relative_gap_limit is not None:
+        if not 0.0 <= solver_relative_gap_limit <= 1.0:
+            raise ValueError(
+                "solver_relative_gap_limit must be between 0.0 and 1.0."
+            )
+        solver.parameters.relative_gap_limit = (
+            solver_relative_gap_limit
+        )
 
     status = solver.solve(model)
 

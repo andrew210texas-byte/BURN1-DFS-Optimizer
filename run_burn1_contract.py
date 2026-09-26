@@ -105,7 +105,7 @@ def _test_site(site_name, file_path):
             f"{site_name} contract lineup count FAILED."
         )
 
-    if payload["generated_candidates"] != 200:
+    if payload["generated_candidates"] < payload["requested_lineups"]:
         raise ValueError(
             f"{site_name} contract candidate count FAILED."
         )

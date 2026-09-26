@@ -296,6 +296,9 @@ def generate_nfl_candidates(
     qb_stack_min=1,
     bring_back_min=0,
     rb_dst_stack=False,
+    candidate_solver_time_limit_seconds=1.0,
+    candidate_solver_relative_gap_limit=0.001,
+    progress_callback=None,
 ):
     if candidate_count < 1:
         raise ValueError(
@@ -305,6 +308,22 @@ def generate_nfl_candidates(
     if min_unique_players < 1:
         raise ValueError(
             "min_unique_players must be at least 1."
+        )
+
+    if (
+        candidate_solver_time_limit_seconds is not None
+        and candidate_solver_time_limit_seconds <= 0
+    ):
+        raise ValueError(
+            "candidate_solver_time_limit_seconds must be positive."
+        )
+
+    if (
+        candidate_solver_relative_gap_limit is not None
+        and not 0.0 <= candidate_solver_relative_gap_limit <= 1.0
+    ):
+        raise ValueError(
+            "candidate_solver_relative_gap_limit must be between 0.0 and 1.0."
         )
 
     lineups = []
@@ -324,6 +343,16 @@ def generate_nfl_candidates(
             rb_dst_stack=rb_dst_stack,
             excluded_lineups=excluded_lineups,
             min_unique_players=min_unique_players,
+            solver_time_limit_seconds=(
+                None
+                if candidate_number == 1
+                else candidate_solver_time_limit_seconds
+            ),
+            solver_relative_gap_limit=(
+                None
+                if candidate_number == 1
+                else candidate_solver_relative_gap_limit
+            ),
         )
 
         if not lineup:
@@ -340,6 +369,12 @@ def generate_nfl_candidates(
                 candidate_number,
             )
         )
+
+        if progress_callback is not None:
+            progress_callback(
+                candidate_number,
+                candidate_count,
+            )
 
     return CandidatePoolResult(
         lineups=lineups,
