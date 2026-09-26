@@ -354,6 +354,10 @@ def select_nfl_portfolio(
     lineup_count,
     min_exposures=None,
     max_exposures=None,
+    locked_player_ids=None,
+    excluded_player_ids=None,
+    min_strategy_exposures=None,
+    max_strategy_exposures=None,
 ):
     if lineup_count < 1:
         raise ValueError(
@@ -397,18 +401,66 @@ def select_nfl_portfolio(
         if min_exposures is None
         else dict(min_exposures)
     )
-
     max_exposures = (
         {}
         if max_exposures is None
         else dict(max_exposures)
     )
+    locked_player_ids = set(
+        ()
+        if locked_player_ids is None
+        else locked_player_ids
+    )
+    excluded_player_ids = set(
+        ()
+        if excluded_player_ids is None
+        else excluded_player_ids
+    )
+    min_strategy_exposures = (
+        {}
+        if min_strategy_exposures is None
+        else dict(min_strategy_exposures)
+    )
+    max_strategy_exposures = (
+        {}
+        if max_strategy_exposures is None
+        else dict(max_strategy_exposures)
+    )
+
+    lock_exclude_conflicts = (
+        locked_player_ids
+        & excluded_player_ids
+    )
+
+    if lock_exclude_conflicts:
+        conflict = sorted(lock_exclude_conflicts)[0]
+        raise ValueError(
+            f"Player {conflict} cannot be both "
+            "locked and excluded."
+        )
+
+    for player_id in locked_player_ids:
+        if max_exposures.get(player_id, 1.0) < 1.0:
+            raise ValueError(
+                f"Locked player {player_id} cannot "
+                "have maximum exposure below 100%."
+            )
+        min_exposures[player_id] = 1.0
+        max_exposures[player_id] = 1.0
+
+    for player_id in excluded_player_ids:
+        if min_exposures.get(player_id, 0.0) > 0.0:
+            raise ValueError(
+                f"Excluded player {player_id} cannot "
+                "have minimum exposure above 0%."
+            )
+        min_exposures[player_id] = 0.0
+        max_exposures[player_id] = 0.0
 
     constrained_player_ids = (
         set(min_exposures)
         | set(max_exposures)
     )
-
     minimum_counts = {}
     maximum_counts = {}
 
@@ -417,7 +469,6 @@ def select_nfl_portfolio(
             player_id,
             0.0,
         )
-
         maximum_exposure = max_exposures.get(
             player_id,
             1.0,
@@ -428,7 +479,6 @@ def select_nfl_portfolio(
             minimum_exposure,
             "Minimum",
         )
-
         _validate_exposure_value(
             player_id,
             maximum_exposure,
@@ -437,9 +487,8 @@ def select_nfl_portfolio(
 
         if minimum_exposure > maximum_exposure:
             raise ValueError(
-                f"Minimum exposure for "
-                f"{player_id} cannot exceed "
-                "maximum exposure."
+                f"Minimum exposure for {player_id} "
+                "cannot exceed maximum exposure."
             )
 
         minimum_counts[player_id] = (
@@ -448,7 +497,6 @@ def select_nfl_portfolio(
                 lineup_count,
             )
         )
-
         maximum_counts[player_id] = (
             _maximum_exposure_count(
                 maximum_exposure,
@@ -461,29 +509,15 @@ def select_nfl_portfolio(
     for candidate_index, profile in enumerate(
         candidate_pool.profiles
     ):
-        for player_id in set(
-            profile.player_ids
-        ):
+        for player_id in set(profile.player_ids):
             player_candidate_indices.setdefault(
                 player_id,
                 [],
             ).append(candidate_index)
 
-    if candidate_pool.lineups:
-        roster_size = len(
-            candidate_pool.lineups[0]
-        )
-    else:
-        roster_size = 0
-
-    required_slots = sum(
-        minimum_counts.values()
-    )
-
-    available_slots = (
-        lineup_count
-        * roster_size
-    )
+    roster_size = len(candidate_pool.lineups[0])
+    required_slots = sum(minimum_counts.values())
+    available_slots = lineup_count * roster_size
 
     if required_slots > available_slots:
         raise Stage2InfeasibleError(
@@ -495,20 +529,14 @@ def select_nfl_portfolio(
             "portfolio roster slots."
         )
 
-    for player_id, minimum_count in (
-        minimum_counts.items()
-    ):
+    for player_id, minimum_count in minimum_counts.items():
         available_candidate_count = len(
             player_candidate_indices.get(
                 player_id,
                 [],
             )
         )
-
-        if (
-            minimum_count
-            > available_candidate_count
-        ):
+        if minimum_count > available_candidate_count:
             raise Stage2InfeasibleError(
                 "Stage 2 minimum exposure for "
                 f"{player_id} requires "
@@ -518,53 +546,142 @@ def select_nfl_portfolio(
                 "Stage 1 candidates."
             )
 
-    model = cp_model.CpModel()
+    def strategy_matches(profile, strategy_name):
+        if strategy_name == "stacked":
+            return not profile.is_unstacked
+        if strategy_name == "unstacked":
+            return profile.is_unstacked
+        if strategy_name == "qb_stack_1_plus":
+            return profile.qb_stack_size >= 1
+        if strategy_name == "qb_stack_2_plus":
+            return profile.qb_stack_size >= 2
+        if strategy_name == "bring_back_1_plus":
+            return profile.bring_back_size >= 1
+        if strategy_name == "rb_dst":
+            return profile.has_rb_dst
+        if strategy_name == "qb_vs_opposing_dst":
+            return profile.has_qb_vs_opposing_dst
+        raise ValueError(
+            "Unknown Stage 2 strategy: "
+            f"{strategy_name}"
+        )
 
+    constrained_strategies = (
+        set(min_strategy_exposures)
+        | set(max_strategy_exposures)
+    )
+    strategy_minimum_counts = {}
+    strategy_maximum_counts = {}
+    strategy_candidate_indices = {}
+
+    for strategy_name in constrained_strategies:
+        minimum_exposure = min_strategy_exposures.get(
+            strategy_name,
+            0.0,
+        )
+        maximum_exposure = max_strategy_exposures.get(
+            strategy_name,
+            1.0,
+        )
+
+        _validate_exposure_value(
+            strategy_name,
+            minimum_exposure,
+            "Minimum strategy",
+        )
+        _validate_exposure_value(
+            strategy_name,
+            maximum_exposure,
+            "Maximum strategy",
+        )
+
+        if minimum_exposure > maximum_exposure:
+            raise ValueError(
+                "Minimum strategy exposure for "
+                f"{strategy_name} cannot exceed "
+                "maximum strategy exposure."
+            )
+
+        matching_indices = [
+            candidate_index
+            for candidate_index, profile in enumerate(
+                candidate_pool.profiles
+            )
+            if strategy_matches(profile, strategy_name)
+        ]
+
+        strategy_candidate_indices[strategy_name] = (
+            matching_indices
+        )
+        strategy_minimum_counts[strategy_name] = (
+            _minimum_exposure_count(
+                minimum_exposure,
+                lineup_count,
+            )
+        )
+        strategy_maximum_counts[strategy_name] = (
+            _maximum_exposure_count(
+                maximum_exposure,
+                lineup_count,
+            )
+        )
+
+        if (
+            strategy_minimum_counts[strategy_name]
+            > len(matching_indices)
+        ):
+            raise Stage2InfeasibleError(
+                "Stage 2 minimum strategy exposure "
+                f"for {strategy_name} requires "
+                f"{strategy_minimum_counts[strategy_name]} "
+                "lineups, but only "
+                f"{len(matching_indices)} Stage 1 "
+                "candidates match that strategy."
+            )
+
+    model = cp_model.CpModel()
     selected = [
         model.NewBoolVar(
             f"candidate_{candidate_index}"
         )
-        for candidate_index
-        in range(candidate_count)
+        for candidate_index in range(candidate_count)
     ]
 
-    model.Add(
-        sum(selected)
-        == lineup_count
-    )
+    model.Add(sum(selected) == lineup_count)
 
     for player_id in constrained_player_ids:
-        candidate_indices = (
-            player_candidate_indices.get(
-                player_id,
-                [],
-            )
+        candidate_indices = player_candidate_indices.get(
+            player_id,
+            [],
         )
-
         appearances = sum(
             selected[candidate_index]
-            for candidate_index
-            in candidate_indices
+            for candidate_index in candidate_indices
+        )
+        model.Add(
+            appearances >= minimum_counts[player_id]
+        )
+        model.Add(
+            appearances <= maximum_counts[player_id]
         )
 
-        minimum_count = minimum_counts[
-            player_id
-        ]
-
-        maximum_count = maximum_counts[
-            player_id
-        ]
-
-        model.Add(
-            appearances >= minimum_count
+    for strategy_name in constrained_strategies:
+        appearances = sum(
+            selected[candidate_index]
+            for candidate_index in (
+                strategy_candidate_indices[strategy_name]
+            )
         )
-
         model.Add(
-            appearances <= maximum_count
+            appearances
+            >= strategy_minimum_counts[strategy_name]
+        )
+        model.Add(
+            appearances
+            <= strategy_maximum_counts[strategy_name]
         )
 
     projection_scale = 1000
-
     model.Maximize(
         sum(
             round(
@@ -572,15 +689,13 @@ def select_nfl_portfolio(
                 * projection_scale
             )
             * selected[candidate_index]
-            for candidate_index, profile
-            in enumerate(
+            for candidate_index, profile in enumerate(
                 candidate_pool.profiles
             )
         )
     )
 
     solver = cp_model.CpSolver()
-
     status = solver.Solve(model)
 
     if status not in (
@@ -590,34 +705,21 @@ def select_nfl_portfolio(
         raise Stage2InfeasibleError(
             "Stage 2 portfolio selection is "
             "infeasible with the current "
-            "candidate pool and exposure "
-            "constraints."
+            "candidate pool and constraints."
         )
 
     selected_candidate_indices = [
         candidate_index
-        for candidate_index
-        in range(candidate_count)
-        if solver.Value(
-            selected[candidate_index]
-        )
-        == 1
+        for candidate_index in range(candidate_count)
+        if solver.Value(selected[candidate_index]) == 1
     ]
-
     selected_lineups = [
-        candidate_pool.lineups[
-            candidate_index
-        ]
-        for candidate_index
-        in selected_candidate_indices
+        candidate_pool.lineups[candidate_index]
+        for candidate_index in selected_candidate_indices
     ]
-
     selected_profiles = [
-        candidate_pool.profiles[
-            candidate_index
-        ]
-        for candidate_index
-        in selected_candidate_indices
+        candidate_pool.profiles[candidate_index]
+        for candidate_index in selected_candidate_indices
     ]
 
     exposures, player_counts = (
@@ -625,16 +727,15 @@ def select_nfl_portfolio(
             selected_profiles
         )
     )
-
     total_projection = sum(
         profile.total_projection
         for profile in selected_profiles
     )
-
-    if status == cp_model.OPTIMAL:
-        solver_status = "OPTIMAL"
-    else:
-        solver_status = "FEASIBLE"
+    solver_status = (
+        "OPTIMAL"
+        if status == cp_model.OPTIMAL
+        else "FEASIBLE"
+    )
 
     return PortfolioSelectionResult(
         lineups=selected_lineups,
@@ -645,12 +746,8 @@ def select_nfl_portfolio(
             selected_candidate_indices
         ),
         requested_lineup_count=lineup_count,
-        selected_lineup_count=len(
-            selected_lineups
-        ),
+        selected_lineup_count=len(selected_lineups),
         candidate_count=candidate_count,
-        total_projection=(
-            total_projection
-        ),
+        total_projection=total_projection,
         solver_status=solver_status,
     )
