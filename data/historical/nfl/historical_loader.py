@@ -17,6 +17,35 @@ PROCESSED_DIR = BASE_DIR / "processed"
 # and FanDuel NFL optimizer.
 OFFENSIVE_POSITIONS = ["QB", "RB", "WR", "TE"]
 
+# Historical archive used by the DFS modeling pipeline.
+START_SEASON = 2016
+END_SEASON = 2025
+
+# Canonical franchise abbreviations used throughout the processed pipeline.
+# Raw source files remain untouched. Historical city abbreviations are mapped
+# to the current franchise identity so relocations do not split team history.
+FRANCHISE_ALIASES = {
+    "SD": "LAC",
+    "OAK": "LV",
+}
+
+
+def normalize_franchise_columns(data, columns):
+    """Normalize historical team abbreviations to canonical franchise IDs."""
+
+    expressions = []
+
+    for column in columns:
+        if column in data.columns:
+            expressions.append(
+                pl.col(column).replace(FRANCHISE_ALIASES).alias(column)
+            )
+
+    if not expressions:
+        return data
+
+    return data.with_columns(expressions)
+
 
 def verify_directories():
     """Verify that the historical NFL data directories exist."""
@@ -74,6 +103,9 @@ def load_offensive_player_stats(season):
         pl.col("position").is_in(OFFENSIVE_POSITIONS)
     )
 
+    # Normalize historical franchise abbreviations after raw preservation.
+    data = normalize_franchise_columns(data, ["team"])
+
     print(f"Loaded {data.height:,} offensive player-game records.")
 
     return data
@@ -114,6 +146,9 @@ def load_team_stats(season):
     # Create the regular-season team dataset used by the DST model.
     data = raw_data.filter(pl.col("season_type") == "REG")
 
+    # Normalize historical franchise abbreviations after raw preservation.
+    data = normalize_franchise_columns(data, ["team"])
+
     print(f"Loaded {data.height:,} team-game records.")
 
     return data
@@ -132,7 +167,7 @@ def validate_team_game_uniqueness(data):
         print("Team-game uniqueness check: PASSED")
     else:
         raise ValueError(
-            f"Team-game uniqueness check FAILED: "
+            "Team-game uniqueness check FAILED: "
             f"{duplicates.height} duplicate records found."
         )
 
@@ -154,6 +189,12 @@ def load_schedule_data(season):
     # Create the regular-season schedule dataset used by our pipeline.
     data = raw_data.filter(pl.col("game_type") == "REG")
 
+    # Normalize historical franchise abbreviations after raw preservation.
+    data = normalize_franchise_columns(
+        data,
+        ["home_team", "away_team"],
+    )
+
     print(f"Loaded {data.height:,} regular-season games.")
 
     return data
@@ -172,7 +213,7 @@ def validate_schedule_uniqueness(data):
         print("Schedule game uniqueness check: PASSED")
     else:
         raise ValueError(
-            f"Schedule game uniqueness check FAILED: "
+            "Schedule game uniqueness check FAILED: "
             f"{duplicates.height} duplicate games found."
         )
 
@@ -398,14 +439,12 @@ def build_offensive_player_games(player_stats, team_game_context):
 def validate_offensive_player_games(player_stats, player_games):
     """Make sure the context join did not lose, add, or duplicate players."""
 
-    # A left join should preserve the exact number of offensive player rows.
     if player_games.height != player_stats.height:
         raise ValueError(
             "Offensive player-game row-count check FAILED: "
             f"expected {player_stats.height}, found {player_games.height}."
         )
 
-    # Each player should still have only one row for each NFL game.
     duplicates = (
         player_games.group_by(
             ["player_id", "season", "week", "game_id"]
@@ -420,9 +459,6 @@ def validate_offensive_player_games(player_stats, player_games):
             f"{duplicates.height} duplicate player-game records found."
         )
 
-    # If the join worked, every player row should have an opponent.
-    # The opponent field comes directly from our team-game context table,
-    # so a null opponent would indicate that the context join failed.
     missing_context = player_games.filter(
         pl.col("opponent").is_null()
     )
@@ -444,7 +480,6 @@ def add_offensive_dfs_scoring(player_games):
 
     print("\nCalculating historical offensive DFS scoring...")
 
-    # Shared scoring components used by both sites.
     base_points = (
         pl.col("passing_yards").fill_null(0) * 0.04
         + pl.col("passing_tds").fill_null(0) * 4
@@ -462,9 +497,6 @@ def add_offensive_dfs_scoring(player_games):
         + pl.col("fumble_recovery_tds").fill_null(0) * 6
     )
 
-    # DraftKings uses full PPR, a -1 lost-fumble penalty, and
-    # three-point bonuses for 300 passing yards, 100 rushing yards,
-    # and 100 receiving yards.
     dk_points = (
         base_points
         + pl.col("receptions").fill_null(0)
@@ -480,9 +512,6 @@ def add_offensive_dfs_scoring(player_games):
         .otherwise(0.0)
     ).alias("actual_dk_points")
 
-    # FanDuel uses half-PPR, a -2 lost-fumble penalty, and
-    # three-point bonuses for 300 passing yards, 100 rushing yards,
-    # and 100 receiving yards.
     fd_points = (
         base_points
         + pl.col("receptions").fill_null(0) * 0.5
@@ -564,6 +593,12 @@ def load_play_by_play_data(season):
 
     data = raw_data.filter(pl.col("season_type") == "REG")
 
+    # Normalize the team identifiers used by DST scoring and joins.
+    data = normalize_franchise_columns(
+        data,
+        ["posteam", "defteam"],
+    )
+
     print(f"Loaded {data.height:,} regular-season play-by-play records.")
 
     return data
@@ -611,7 +646,6 @@ def build_points_allowed(play_by_play, team_game_context):
 
     # Defensive score changes normally do not count against the offense's DST.
     # The exception is a special-teams TD scored against the kicking team.
-    # We audited 2025 PBP and identify those plays from their kick/punt fields.
     special_teams_defteam_points = (
         pbp.filter(
             (pl.col("defteam_delta") == 6)
@@ -769,30 +803,6 @@ def build_dst_scoring_dataset(
         )
     )
 
-    # Count only fumble-return TDs actually scored by the defense.
-    # This avoids the two audited 2025 offensive fumble-recovery TDs that are
-    # mixed into nflverse's generic team fumble_recovery_tds field.
-    defensive_fumble_tds = (
-        play_by_play.filter(
-            (pl.col("fumble_lost") == 1)
-            & (pl.col("touchdown") == 1)
-            & (pl.col("return_touchdown") == 1)
-            & pl.col("defteam").is_not_null()
-            & (
-                (
-                    pl.col("defteam_score_post")
-                    .fill_null(pl.col("defteam_score"))
-                    .fill_null(0)
-                    - pl.col("defteam_score").fill_null(0)
-                )
-                == 6
-            )
-        )
-        .group_by(["game_id", pl.col("defteam").alias("team")])
-        .len()
-        .rename({"len": "defensive_fumble_tds"})
-    )
-
     # Successful defensive PAT/two-point returns are worth two DST points.
     defensive_conversion_returns = (
         play_by_play.filter(
@@ -809,20 +819,12 @@ def build_dst_scoring_dataset(
 
     dst = (
         dst.join(
-            defensive_fumble_tds,
-            on=["game_id", "team"],
-            how="left",
-        )
-        .join(
             defensive_conversion_returns,
             on=["game_id", "team"],
             how="left",
         )
         .with_columns(
-            [
-                pl.col("defensive_fumble_tds").fill_null(0),
-                pl.col("defensive_conversion_returns").fill_null(0),
-            ]
+            pl.col("defensive_conversion_returns").fill_null(0)
         )
     )
 
@@ -832,11 +834,10 @@ def build_dst_scoring_dataset(
         + pl.col("def_fg_blocks").fill_null(0)
     )
 
-    # def_tds was audited as interception-return TDs in 2025.
-    # special_teams_tds contains all 27 audited special-teams TDs.
+    # nflverse def_tds already includes non-special-teams defensive TDs,
+    # including defensive fumble-return TDs. Add special-teams TDs once.
     return_tds = (
         pl.col("def_tds").fill_null(0)
-        + pl.col("defensive_fumble_tds").fill_null(0)
         + pl.col("special_teams_tds").fill_null(0)
     )
 
@@ -908,29 +909,45 @@ def validate_dst_scoring(team_stats, scored_dst):
 if __name__ == "__main__":
     verify_directories()
 
-    # Load, preserve, and validate individual offensive player-game data.
-    player_stats = load_offensive_player_stats(2025)
+    seasons = list(range(START_SEASON, END_SEASON + 1))
+    season_label = f"{START_SEASON}_{END_SEASON}"
+
+    print(
+        f"\nBuilding historical NFL datasets for "
+        f"{START_SEASON}-{END_SEASON}..."
+    )
+
+    # Load and combine offensive player-game data.
+    player_stats = pl.concat(
+        [load_offensive_player_stats(season) for season in seasons],
+        how="diagonal_relaxed",
+    )
     validate_player_game_uniqueness(player_stats)
 
-    # Load, preserve, and validate team-game data for defense/special teams.
-    team_stats = load_team_stats(2025)
+    # Load and combine team-game data.
+    team_stats = pl.concat(
+        [load_team_stats(season) for season in seasons],
+        how="diagonal_relaxed",
+    )
     validate_team_game_uniqueness(team_stats)
 
-    # Load, preserve, and validate schedule/results/game-environment data.
-    schedule_data = load_schedule_data(2025)
+    # Load and combine schedule/results/game-environment data.
+    schedule_data = pl.concat(
+        [load_schedule_data(season) for season in seasons],
+        how="diagonal_relaxed",
+    )
     validate_schedule_uniqueness(schedule_data)
 
     # Verify that team statistics connect correctly to scheduled games.
     validate_team_schedule_matches(team_stats, schedule_data)
 
-    # Build and validate one pregame-context record per NFL team per game.
+    # Build and validate one context record per NFL team per game.
     team_game_context = build_team_game_context(schedule_data)
     validate_team_game_context(team_game_context, schedule_data)
 
-    # Save the processed team-game context dataset.
     save_processed_dataset(
         team_game_context,
-        "team_game_context_2025.parquet",
+        f"team_game_context_{season_label}.parquet",
     )
 
     # Join every offensive player-game to its team's game context.
@@ -939,17 +956,14 @@ if __name__ == "__main__":
         team_game_context,
     )
 
-    # Verify that the join preserved all 6,037 player-game records
-    # without creating duplicates or leaving unmatched context.
     validate_offensive_player_games(
         player_stats,
         offensive_player_games,
     )
 
-    # Save the completed Step 5 player modeling dataset.
     save_processed_dataset(
         offensive_player_games,
-        "offensive_player_games_2025.parquet",
+        f"offensive_player_games_{season_label}.parquet",
     )
 
     # Calculate historical DraftKings and FanDuel offensive fantasy points.
@@ -957,46 +971,47 @@ if __name__ == "__main__":
         offensive_player_games,
     )
 
-    # Validate that scoring did not lose, duplicate, or leave null player rows.
     validate_offensive_dfs_scoring(
         offensive_player_games,
         offensive_player_games_scored,
     )
 
-    # Save the Step 6 offensive DFS scoring dataset.
     save_processed_dataset(
         offensive_player_games_scored,
-        "offensive_player_games_scored_2025.parquet",
+        f"offensive_player_games_scored_{season_label}.parquet",
     )
 
-    # Load play-by-play for exact DST points-allowed and rare-score attribution.
-    play_by_play = load_play_by_play_data(2025)
+    # Load and combine play-by-play for DST scoring.
+    play_by_play = pl.concat(
+        [load_play_by_play_data(season) for season in seasons],
+        how="diagonal_relaxed",
+    )
 
-    # Reconstruct the scoreboard points that actually count against each DST.
+    # Reconstruct the scoreboard points that count against each DST.
     points_allowed = build_points_allowed(
         play_by_play,
         team_game_context,
     )
+
     validate_points_allowed(
         points_allowed,
         team_game_context,
     )
 
-    # Build, score, validate, and save the historical team DST dataset.
+    # Build, score, validate, and save the historical DST dataset.
     dst_scored = build_dst_scoring_dataset(
         team_stats,
         team_game_context,
         points_allowed,
         play_by_play,
     )
+
     validate_dst_scoring(
         team_stats,
         dst_scored,
     )
+
     save_processed_dataset(
         dst_scored,
-        "dst_scored_2025.parquet",
+        f"dst_scored_{season_label}.parquet",
     )
-
-
-
