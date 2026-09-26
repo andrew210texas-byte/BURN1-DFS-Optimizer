@@ -569,26 +569,30 @@ def run_site(
     )
 
 
-dk_players = load_dk_players()
+def main():
+    dk_players = load_dk_players()
+    fd_players = load_fd_players()
 
-fd_players = load_fd_players()
+    run_site(
+        "DraftKings",
+        dk_players,
+        50000,
+    )
 
-run_site(
-    "DraftKings",
-    dk_players,
-    50000,
-)
+    run_site(
+        "FanDuel",
+        fd_players,
+        60000,
+    )
 
-run_site(
-    "FanDuel",
-    fd_players,
-    60000,
-)
+    print()
+    print("=" * 96)
+    print(
+        "SHARED DK + FD GPP "
+        "CORRELATION ENGINE PASSED"
+    )
+    print("=" * 96)
 
-print()
-print("=" * 96)
-print(
-    "SHARED DK + FD GPP "
-    "CORRELATION ENGINE PASSED"
-)
-print("=" * 96)
+
+if __name__ == "__main__":
+    main()

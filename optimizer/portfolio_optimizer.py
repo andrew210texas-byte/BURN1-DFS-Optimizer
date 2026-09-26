@@ -197,3 +197,72 @@ def generate_nfl_portfolio(
         exposures=exposures,
         player_counts=player_counts,
     )
+
+@dataclass
+class CandidatePoolResult:
+    lineups: list
+    profiles: list[LineupProfile]
+    requested_count: int
+    generated_count: int
+
+
+def generate_nfl_candidates(
+    players,
+    salary_cap,
+    candidate_count=200,
+    min_unique_players=2,
+    gpp_mode=False,
+    qb_stack_min=1,
+    bring_back_min=0,
+    rb_dst_stack=False,
+):
+    if candidate_count < 1:
+        raise ValueError(
+            "candidate_count must be at least 1."
+        )
+
+    if min_unique_players < 1:
+        raise ValueError(
+            "min_unique_players must be at least 1."
+        )
+
+    lineups = []
+    profiles = []
+    excluded_lineups = []
+
+    for candidate_number in range(
+        1,
+        candidate_count + 1,
+    ):
+        lineup = optimize_nfl_lineup(
+            players,
+            salary_cap=salary_cap,
+            gpp_mode=gpp_mode,
+            qb_stack_min=qb_stack_min,
+            bring_back_min=bring_back_min,
+            rb_dst_stack=rb_dst_stack,
+            excluded_lineups=excluded_lineups,
+            min_unique_players=min_unique_players,
+        )
+
+        if not lineup:
+            break
+
+        player_ids = _player_ids(lineup)
+
+        lineups.append(lineup)
+        excluded_lineups.append(player_ids)
+
+        profiles.append(
+            _profile_lineup(
+                lineup,
+                candidate_number,
+            )
+        )
+
+    return CandidatePoolResult(
+        lineups=lineups,
+        profiles=profiles,
+        requested_count=candidate_count,
+        generated_count=len(lineups),
+    )
