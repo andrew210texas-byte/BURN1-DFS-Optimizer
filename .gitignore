@@ -12,3 +12,8 @@ data/historical/nfl/*.pdf
 data/historical/nfl/*.docx
 data/historical/nfl/*.htmlmodeling/output/
 modeling/artifacts/
+
+# Generated modeling artifacts
+modeling/output/**
+modeling/artifacts/**
+data/historical/nfl/saas_profit_infrastructure_simulator.html
