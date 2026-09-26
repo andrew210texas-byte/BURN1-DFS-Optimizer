@@ -39,6 +39,77 @@ def clean(value) -> str:
     return str(value).strip()
 
 
+def parse_exposure_args(values: list[str], label: str) -> dict[str, float]:
+    parsed = {}
+
+    for raw in values:
+        if "=" not in raw:
+            raise ValueError(
+                f"{label} must use PLAYER_ID=FRACTION format; got {raw!r}."
+            )
+
+        key, raw_value = raw.split("=", 1)
+        key = key.strip()
+
+        if not key:
+            raise ValueError(
+                f"{label} contains an empty player/strategy key."
+            )
+
+        try:
+            value = float(raw_value)
+        except ValueError as exc:
+            raise ValueError(
+                f"{label} value for {key} must be numeric."
+            ) from exc
+
+        if not 0.0 <= value <= 1.0:
+            raise ValueError(
+                f"{label} value for {key} must be between 0.0 and 1.0."
+            )
+
+        parsed[key] = value
+
+    return parsed
+
+
+def validate_player_references(
+    players: list[Player],
+    locked_player_ids: set[str],
+    excluded_player_ids: set[str],
+    min_player_exposures: dict[str, float],
+    max_player_exposures: dict[str, float],
+) -> None:
+    valid_ids = {
+        player.player_id
+        for player in players
+    }
+
+    referenced_ids = (
+        set(locked_player_ids)
+        | set(excluded_player_ids)
+        | set(min_player_exposures)
+        | set(max_player_exposures)
+    )
+
+    unknown = sorted(
+        referenced_ids - valid_ids
+    )
+
+    if unknown:
+        preview = ", ".join(
+            unknown[:10]
+        )
+
+        if len(unknown) > 10:
+            preview += ", ..."
+
+        raise ValueError(
+            "Tournament controls reference player IDs "
+            f"that are not in the loaded pool: {preview}"
+        )
+
+
 def load_players(pool_file: Path, site_name: str) -> list[Player]:
     if not pool_file.exists():
         raise FileNotFoundError(
@@ -214,6 +285,7 @@ def save_outputs(
     slate_slug: str,
     output_dir: Path,
     elapsed_seconds: float,
+    configuration: dict,
 ) -> dict[str, Path]:
     output_dir.mkdir(
         parents=True,
@@ -309,6 +381,7 @@ def save_outputs(
             elapsed_seconds,
             3,
         ),
+        "configuration": configuration,
         "message": result_dict["message"],
     }
 
@@ -393,6 +466,84 @@ def parse_args():
         help="Directory for BURN1 production outputs.",
     )
 
+    parser.add_argument(
+        "--gpp-mode",
+        action="store_true",
+        help="Enable Stage 1 NFL GPP correlation rules.",
+    )
+
+    parser.add_argument(
+        "--qb-stack-min",
+        type=int,
+        default=1,
+        help="Minimum QB pass-catcher stack size when GPP mode is enabled.",
+    )
+
+    parser.add_argument(
+        "--bring-back-min",
+        type=int,
+        default=0,
+        help="Minimum opposing bring-back count when GPP mode is enabled.",
+    )
+
+    parser.add_argument(
+        "--rb-dst-stack",
+        action="store_true",
+        help="Require RB+DST correlation during Stage 1 GPP generation.",
+    )
+
+    parser.add_argument(
+        "--lock",
+        action="append",
+        default=[],
+        metavar="PLAYER_ID",
+        help="Lock a player into every final lineup. Repeat as needed.",
+    )
+
+    parser.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        metavar="PLAYER_ID",
+        help="Exclude a player from every final lineup. Repeat as needed.",
+    )
+
+    parser.add_argument(
+        "--min-player-exposure",
+        action="append",
+        default=[],
+        metavar="PLAYER_ID=FRACTION",
+        help="Minimum player exposure, e.g. 44220223=0.25. Repeat as needed.",
+    )
+
+    parser.add_argument(
+        "--max-player-exposure",
+        action="append",
+        default=[],
+        metavar="PLAYER_ID=FRACTION",
+        help="Maximum player exposure, e.g. 44220223=0.60. Repeat as needed.",
+    )
+
+    parser.add_argument(
+        "--min-strategy-exposure",
+        action="append",
+        default=[],
+        metavar="STRATEGY=FRACTION",
+        help=(
+            "Minimum strategy exposure. Supported names include stacked, "
+            "unstacked, qb_stack_1_plus, qb_stack_2_plus, bring_back_1_plus, "
+            "rb_dst, qb_vs_opposing_dst."
+        ),
+    )
+
+    parser.add_argument(
+        "--max-strategy-exposure",
+        action="append",
+        default=[],
+        metavar="STRATEGY=FRACTION",
+        help="Maximum strategy exposure. Repeat as needed.",
+    )
+
     return parser.parse_args()
 
 
@@ -430,11 +581,88 @@ def main():
         f"Loaded players:    {len(players):>7}"
     )
 
+    locked_player_ids = {
+        clean(player_id)
+        for player_id in args.lock
+        if clean(player_id)
+    }
+
+    excluded_player_ids = {
+        clean(player_id)
+        for player_id in args.exclude
+        if clean(player_id)
+    }
+
+    min_player_exposures = parse_exposure_args(
+        args.min_player_exposure,
+        "Minimum player exposure",
+    )
+
+    max_player_exposures = parse_exposure_args(
+        args.max_player_exposure,
+        "Maximum player exposure",
+    )
+
+    min_strategy_exposures = parse_exposure_args(
+        args.min_strategy_exposure,
+        "Minimum strategy exposure",
+    )
+
+    max_strategy_exposures = parse_exposure_args(
+        args.max_strategy_exposure,
+        "Maximum strategy exposure",
+    )
+
+    validate_player_references(
+        players,
+        locked_player_ids,
+        excluded_player_ids,
+        min_player_exposures,
+        max_player_exposures,
+    )
+
+    configuration = {
+        "gpp_mode": args.gpp_mode,
+        "qb_stack_min": args.qb_stack_min,
+        "bring_back_min": args.bring_back_min,
+        "rb_dst_stack": args.rb_dst_stack,
+        "locked_player_ids": sorted(locked_player_ids),
+        "excluded_player_ids": sorted(excluded_player_ids),
+        "min_player_exposures": min_player_exposures,
+        "max_player_exposures": max_player_exposures,
+        "min_strategy_exposures": min_strategy_exposures,
+        "max_strategy_exposures": max_strategy_exposures,
+    }
+
+    print()
+    print("TOURNAMENT CONTROLS")
+    print("-" * 92)
+    print(f"GPP mode:           {args.gpp_mode}")
+    print(f"QB stack minimum:   {args.qb_stack_min}")
+    print(f"Bring-back minimum: {args.bring_back_min}")
+    print(f"RB+DST required:    {args.rb_dst_stack}")
+    print(f"Locked players:     {len(locked_player_ids)}")
+    print(f"Excluded players:   {len(excluded_player_ids)}")
+    print(f"Player min limits:  {len(min_player_exposures)}")
+    print(f"Player max limits:  {len(max_player_exposures)}")
+    print(f"Strategy min limits:{len(min_strategy_exposures):>7}")
+    print(f"Strategy max limits:{len(max_strategy_exposures):>7}")
+
     config = Burn1PortfolioConfig(
         site=site_name,
         lineup_count=args.lineups,
         candidate_count=args.candidates,
         min_unique_players=args.min_unique,
+        gpp_mode=args.gpp_mode,
+        qb_stack_min=args.qb_stack_min,
+        bring_back_min=args.bring_back_min,
+        rb_dst_stack=args.rb_dst_stack,
+        locked_player_ids=locked_player_ids,
+        excluded_player_ids=excluded_player_ids,
+        min_player_exposures=min_player_exposures,
+        max_player_exposures=max_player_exposures,
+        min_strategy_exposures=min_strategy_exposures,
+        max_strategy_exposures=max_strategy_exposures,
     )
 
     started = perf_counter()
@@ -493,6 +721,7 @@ def main():
         slate_slug=args.slate,
         output_dir=args.output_dir,
         elapsed_seconds=elapsed,
+        configuration=configuration,
     )
 
     print()
