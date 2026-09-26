@@ -1,13 +1,31 @@
-from ortools.sat.python import cp_model
+﻿from ortools.sat.python import cp_model
 
 from models.lineup_player import LineupPlayer
 
 
-def optimize_nfl_lineup(players, salary_cap):
+SKILL_POSITIONS = {
+    "RB",
+    "WR",
+    "TE",
+}
+
+
+def optimize_nfl_lineup(
+    players,
+    salary_cap,
+    gpp_mode=False,
+    qb_stack_min=1,
+    bring_back_min=0,
+    rb_dst_stack=False,
+):
     eligible_players = [
         player
         for player in players
-        if player.status.upper() not in {"OUT", "IR"}
+        if player.status.upper() not in {
+            "OUT",
+            "IR",
+            "O",
+        }
     ]
 
     model = cp_model.CpModel()
@@ -24,8 +42,6 @@ def optimize_nfl_lineup(players, salary_cap):
         "DST",
     ]
 
-    # Map our numbered optimizer slots to the site's normalized
-    # roster-position names stored on each Player.
     slot_position = {
         "QB": "QB",
         "RB1": "RB",
@@ -40,12 +56,21 @@ def optimize_nfl_lineup(players, salary_cap):
 
     selected = {}
 
-    for player_index, player in enumerate(eligible_players):
+    for player_index, player in enumerate(
+        eligible_players
+    ):
         for slot in roster_slots:
-            required_position = slot_position[slot]
+            required_position = (
+                slot_position[slot]
+            )
 
-            if required_position in player.roster_positions:
-                selected[player_index, slot] = model.new_bool_var(
+            if required_position in (
+                player.roster_positions
+            ):
+                selected[
+                    player_index,
+                    slot,
+                ] = model.new_bool_var(
                     f"player_{player_index}_{slot}"
                 )
 
@@ -53,49 +78,320 @@ def optimize_nfl_lineup(players, salary_cap):
     for slot in roster_slots:
         model.add(
             sum(
-                selected[player_index, slot]
-                for player_index, player in enumerate(eligible_players)
-                if (player_index, slot) in selected
+                selected[
+                    player_index,
+                    slot,
+                ]
+                for player_index, player
+                in enumerate(
+                    eligible_players
+                )
+                if (
+                    player_index,
+                    slot,
+                ) in selected
             )
             == 1
         )
 
-    # A player can only appear once in a lineup.
-    for player_index, player in enumerate(eligible_players):
+    # One player can occupy at most one roster slot.
+    for player_index, player in enumerate(
+        eligible_players
+    ):
         model.add(
             sum(
-                selected[player_index, slot]
+                selected[
+                    player_index,
+                    slot,
+                ]
                 for slot in roster_slots
-                if (player_index, slot) in selected
+                if (
+                    player_index,
+                    slot,
+                ) in selected
             )
             <= 1
         )
 
-    # Total salary cannot exceed the site's salary cap.
+    # Build a simple "is this player used?" variable.
+    used = {}
+
+    for player_index, player in enumerate(
+        eligible_players
+    ):
+        used[player_index] = (
+            model.new_bool_var(
+                f"used_{player_index}"
+            )
+        )
+
+        model.add(
+            used[player_index]
+            == sum(
+                selected[
+                    player_index,
+                    slot,
+                ]
+                for slot in roster_slots
+                if (
+                    player_index,
+                    slot,
+                ) in selected
+            )
+        )
+
+    # Salary cap.
     model.add(
         sum(
-            selected[player_index, slot] * player.salary
-            for player_index, player in enumerate(eligible_players)
+            selected[
+                player_index,
+                slot,
+            ]
+            * player.salary
+            for player_index, player
+            in enumerate(
+                eligible_players
+            )
             for slot in roster_slots
-            if (player_index, slot) in selected
+            if (
+                player_index,
+                slot,
+            ) in selected
         )
         <= salary_cap
     )
 
-    # CP-SAT optimizes integers, so scale decimal fantasy points by 100.
+    # ==============================================================
+    # GPP CORRELATION RULES
+    # ==============================================================
+
+    if gpp_mode:
+
+        quarterback_indexes = [
+            index
+            for index, player
+            in enumerate(
+                eligible_players
+            )
+            if player.position == "QB"
+        ]
+
+        dst_indexes = [
+            index
+            for index, player
+            in enumerate(
+                eligible_players
+            )
+            if player.position == "DST"
+        ]
+
+        # ----------------------------------------------------------
+        # QB STACK
+        #
+        # If a QB is selected, require at least N same-team
+        # RB/WR/TE players.
+        # ----------------------------------------------------------
+
+        if qb_stack_min > 0:
+
+            for qb_index in (
+                quarterback_indexes
+            ):
+                qb = eligible_players[
+                    qb_index
+                ]
+
+                teammate_indexes = [
+                    index
+                    for index, player
+                    in enumerate(
+                        eligible_players
+                    )
+                    if (
+                        player.team == qb.team
+                        and player.position
+                        in SKILL_POSITIONS
+                    )
+                ]
+
+                if (
+                    len(teammate_indexes)
+                    < qb_stack_min
+                ):
+                    model.add(
+                        used[qb_index] == 0
+                    )
+
+                else:
+                    model.add(
+                        sum(
+                            used[index]
+                            for index
+                            in teammate_indexes
+                        )
+                        >= (
+                            qb_stack_min
+                            * used[qb_index]
+                        )
+                    )
+
+        # ----------------------------------------------------------
+        # BRING-BACK
+        #
+        # If a QB is selected, require at least N opposing
+        # RB/WR/TE players.
+        # ----------------------------------------------------------
+
+        if bring_back_min > 0:
+
+            for qb_index in (
+                quarterback_indexes
+            ):
+                qb = eligible_players[
+                    qb_index
+                ]
+
+                opponent_indexes = [
+                    index
+                    for index, player
+                    in enumerate(
+                        eligible_players
+                    )
+                    if (
+                        player.team
+                        == qb.opponent
+                        and player.position
+                        in SKILL_POSITIONS
+                    )
+                ]
+
+                if (
+                    len(opponent_indexes)
+                    < bring_back_min
+                ):
+                    model.add(
+                        used[qb_index] == 0
+                    )
+
+                else:
+                    model.add(
+                        sum(
+                            used[index]
+                            for index
+                            in opponent_indexes
+                        )
+                        >= (
+                            bring_back_min
+                            * used[qb_index]
+                        )
+                    )
+
+        # ----------------------------------------------------------
+        # RB + DST
+        #
+        # If a DST is selected, require at least one RB from
+        # that same team.
+        # ----------------------------------------------------------
+
+        if rb_dst_stack:
+
+            for dst_index in (
+                dst_indexes
+            ):
+                dst = eligible_players[
+                    dst_index
+                ]
+
+                rb_indexes = [
+                    index
+                    for index, player
+                    in enumerate(
+                        eligible_players
+                    )
+                    if (
+                        player.position == "RB"
+                        and player.team
+                        == dst.team
+                    )
+                ]
+
+                if not rb_indexes:
+                    model.add(
+                        used[dst_index] == 0
+                    )
+
+                else:
+                    model.add(
+                        sum(
+                            used[index]
+                            for index
+                            in rb_indexes
+                        )
+                        >= used[dst_index]
+                    )
+
+        # ----------------------------------------------------------
+        # QB vs OPPOSING DST
+        #
+        # Do not roster a QB against the defense he is facing.
+        # ----------------------------------------------------------
+
+        for qb_index in (
+            quarterback_indexes
+        ):
+            qb = eligible_players[
+                qb_index
+            ]
+
+            for dst_index in (
+                dst_indexes
+            ):
+                dst = eligible_players[
+                    dst_index
+                ]
+
+                if (
+                    dst.team
+                    == qb.opponent
+                ):
+                    model.add(
+                        used[qb_index]
+                        + used[dst_index]
+                        <= 1
+                    )
+
+    # ==============================================================
+    # OBJECTIVE
+    # ==============================================================
+
     projection_scale = 100
 
     model.maximize(
         sum(
-            selected[player_index, slot]
-            * int(round(player.projection * projection_scale))
-            for player_index, player in enumerate(eligible_players)
+            selected[
+                player_index,
+                slot,
+            ]
+            * int(
+                round(
+                    player.projection
+                    * projection_scale
+                )
+            )
+            for player_index, player
+            in enumerate(
+                eligible_players
+            )
             for slot in roster_slots
-            if (player_index, slot) in selected
+            if (
+                player_index,
+                slot,
+            ) in selected
         )
     )
 
     solver = cp_model.CpSolver()
+
     status = solver.solve(model)
 
     if status not in {
@@ -107,21 +403,44 @@ def optimize_nfl_lineup(players, salary_cap):
     lineup = []
 
     for slot in roster_slots:
-        for player_index, player in enumerate(eligible_players):
-            if (player_index, slot) not in selected:
+        for player_index, player in enumerate(
+            eligible_players
+        ):
+            if (
+                player_index,
+                slot,
+            ) not in selected:
                 continue
 
-            if solver.value(selected[player_index, slot]) == 1:
+            if (
+                solver.value(
+                    selected[
+                        player_index,
+                        slot,
+                    ]
+                )
+                == 1
+            ):
                 display_slot = slot
 
-                if slot in {"RB1", "RB2"}:
+                if slot in {
+                    "RB1",
+                    "RB2",
+                }:
                     display_slot = "RB"
-                elif slot in {"WR1", "WR2", "WR3"}:
+
+                elif slot in {
+                    "WR1",
+                    "WR2",
+                    "WR3",
+                }:
                     display_slot = "WR"
 
                 lineup.append(
                     LineupPlayer(
-                        roster_slot=display_slot,
+                        roster_slot=(
+                            display_slot
+                        ),
                         player=player,
                     )
                 )
