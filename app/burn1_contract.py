@@ -37,6 +37,7 @@ class Burn1PortfolioConfig:
     lineup_count: int = 20
     candidate_count: int = 200
     min_unique_players: int = 2
+    candidate_gpp_fraction: float | None = None
 
     gpp_mode: bool = False
     qb_stack_min: int = 1
@@ -159,6 +160,14 @@ def _validate_config(config):
     if config.min_unique_players < 1:
         raise ValueError(
             "min_unique_players must be at least 1."
+        )
+
+    if (
+        config.candidate_gpp_fraction is not None
+        and not 0.0 <= config.candidate_gpp_fraction <= 1.0
+    ):
+        raise ValueError(
+            "candidate_gpp_fraction must be between 0.0 and 1.0."
         )
 
     if config.qb_stack_min < 0:
@@ -419,6 +428,9 @@ def run_burn1_nfl_portfolio(
         qb_stack_min=config.qb_stack_min,
         bring_back_min=config.bring_back_min,
         rb_dst_stack=config.rb_dst_stack,
+        candidate_gpp_fraction=(
+            config.candidate_gpp_fraction
+        ),
     )
 
     if candidate_pool.generated_count < config.lineup_count:

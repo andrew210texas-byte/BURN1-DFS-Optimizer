@@ -296,6 +296,7 @@ def generate_nfl_candidates(
     qb_stack_min=1,
     bring_back_min=0,
     rb_dst_stack=False,
+    candidate_gpp_fraction=None,
     candidate_solver_time_limit_seconds=1.0,
     candidate_solver_relative_gap_limit=0.001,
     progress_callback=None,
@@ -308,6 +309,14 @@ def generate_nfl_candidates(
     if min_unique_players < 1:
         raise ValueError(
             "min_unique_players must be at least 1."
+        )
+
+    if (
+        candidate_gpp_fraction is not None
+        and not 0.0 <= candidate_gpp_fraction <= 1.0
+    ):
+        raise ValueError(
+            "candidate_gpp_fraction must be between 0.0 and 1.0."
         )
 
     if (
@@ -330,14 +339,73 @@ def generate_nfl_candidates(
     profiles = []
     excluded_lineups = []
 
+    if candidate_gpp_fraction is None:
+        candidate_gpp_flags = [
+            gpp_mode
+            for _ in range(candidate_count)
+        ]
+    else:
+        gpp_target_count = int(
+            math.floor(
+                candidate_count
+                * candidate_gpp_fraction
+                + 0.5
+            )
+        )
+
+        candidate_gpp_flags = []
+        gpp_assigned = 0
+
+        for candidate_number in range(
+            1,
+            candidate_count + 1,
+        ):
+            target_gpp_through_candidate = int(
+                math.floor(
+                    candidate_number
+                    * gpp_target_count
+                    / candidate_count
+                    + 0.5
+                )
+            )
+
+            use_gpp_mode = (
+                target_gpp_through_candidate
+                > gpp_assigned
+            )
+
+            candidate_gpp_flags.append(
+                use_gpp_mode
+            )
+
+            if use_gpp_mode:
+                gpp_assigned += 1
+
+    first_solve_by_mode = {
+        False: True,
+        True: True,
+    }
+
     for candidate_number in range(
         1,
         candidate_count + 1,
     ):
+        candidate_uses_gpp = (
+            candidate_gpp_flags[
+                candidate_number - 1
+            ]
+        )
+
+        use_unbounded_first_solve = (
+            first_solve_by_mode[
+                candidate_uses_gpp
+            ]
+        )
+
         lineup = optimize_nfl_lineup(
             players,
             salary_cap=salary_cap,
-            gpp_mode=gpp_mode,
+            gpp_mode=candidate_uses_gpp,
             qb_stack_min=qb_stack_min,
             bring_back_min=bring_back_min,
             rb_dst_stack=rb_dst_stack,
@@ -345,15 +413,19 @@ def generate_nfl_candidates(
             min_unique_players=min_unique_players,
             solver_time_limit_seconds=(
                 None
-                if candidate_number == 1
+                if use_unbounded_first_solve
                 else candidate_solver_time_limit_seconds
             ),
             solver_relative_gap_limit=(
                 None
-                if candidate_number == 1
+                if use_unbounded_first_solve
                 else candidate_solver_relative_gap_limit
             ),
         )
+
+        first_solve_by_mode[
+            candidate_uses_gpp
+        ] = False
 
         if not lineup:
             break

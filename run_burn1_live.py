@@ -469,7 +469,19 @@ def parse_args():
     parser.add_argument(
         "--gpp-mode",
         action="store_true",
-        help="Enable Stage 1 NFL GPP correlation rules.",
+        help="Enable GPP correlation rules for every Stage 1 candidate.",
+    )
+
+    parser.add_argument(
+        "--candidate-gpp-fraction",
+        type=float,
+        default=None,
+        help=(
+            "Mix raw and GPP Stage 1 candidates. "
+            "Example: 0.50 targets a 50/50 candidate pool. "
+            "When supplied, this mixed schedule takes precedence "
+            "over --gpp-mode for candidate selection."
+        ),
     )
 
     parser.add_argument(
@@ -623,6 +635,7 @@ def main():
 
     configuration = {
         "gpp_mode": args.gpp_mode,
+        "candidate_gpp_fraction": args.candidate_gpp_fraction,
         "qb_stack_min": args.qb_stack_min,
         "bring_back_min": args.bring_back_min,
         "rb_dst_stack": args.rb_dst_stack,
@@ -637,7 +650,11 @@ def main():
     print()
     print("TOURNAMENT CONTROLS")
     print("-" * 92)
-    print(f"GPP mode:           {args.gpp_mode}")
+    print(f"All-GPP mode:       {args.gpp_mode}")
+    print(
+        "Candidate GPP mix: "
+        f"{args.candidate_gpp_fraction}"
+    )
     print(f"QB stack minimum:   {args.qb_stack_min}")
     print(f"Bring-back minimum: {args.bring_back_min}")
     print(f"RB+DST required:    {args.rb_dst_stack}")
@@ -653,6 +670,9 @@ def main():
         lineup_count=args.lineups,
         candidate_count=args.candidates,
         min_unique_players=args.min_unique,
+        candidate_gpp_fraction=(
+            args.candidate_gpp_fraction
+        ),
         gpp_mode=args.gpp_mode,
         qb_stack_min=args.qb_stack_min,
         bring_back_min=args.bring_back_min,
