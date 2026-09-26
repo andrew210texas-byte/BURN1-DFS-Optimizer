@@ -17,6 +17,8 @@ def optimize_nfl_lineup(
     qb_stack_min=1,
     bring_back_min=0,
     rb_dst_stack=False,
+    excluded_lineups=None,
+    min_unique_players=1,
 ):
     eligible_players = [
         player
@@ -359,6 +361,57 @@ def optimize_nfl_lineup(
                         + used[dst_index]
                         <= 1
                     )
+
+    # ==============================================================
+    # PORTFOLIO UNIQUENESS
+    # ==============================================================
+    #
+    # Each previously generated lineup is represented by its player
+    # IDs. A new lineup may overlap with it by at most:
+    #
+    #     roster size - minimum unique players
+    #
+    # With a nine-player NFL roster and min_unique_players=2, for
+    # example, the next lineup can share at most seven players with
+    # any previous lineup.
+    #
+    # This is inactive for existing single-lineup calls.
+
+    if excluded_lineups:
+        if min_unique_players < 1:
+            raise ValueError(
+                "min_unique_players must be at least 1."
+            )
+
+        roster_size = len(roster_slots)
+
+        if min_unique_players > roster_size:
+            raise ValueError(
+                "min_unique_players cannot exceed roster size."
+            )
+
+        maximum_overlap = (
+            roster_size - min_unique_players
+        )
+
+        for previous_lineup in excluded_lineups:
+            previous_ids = set(previous_lineup)
+
+            overlap_indexes = [
+                index
+                for index, player
+                in enumerate(eligible_players)
+                if player.player_id in previous_ids
+            ]
+
+            if overlap_indexes:
+                model.add(
+                    sum(
+                        used[index]
+                        for index in overlap_indexes
+                    )
+                    <= maximum_overlap
+                )
 
     # ==============================================================
     # OBJECTIVE
