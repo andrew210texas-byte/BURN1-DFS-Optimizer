@@ -328,6 +328,16 @@ def find_feasible_lock_test(
     )
 
     for player_id, candidate_count in ranked_players:
+        original_exposure = (
+            unconstrained.exposures.get(
+                player_id,
+                0.0,
+            )
+        )
+
+        if original_exposure >= 1.0:
+            continue
+
         if candidate_count < LINEUP_COUNT:
             continue
 
@@ -351,10 +361,7 @@ def find_feasible_lock_test(
         if realized == 1.0:
             return (
                 player_id,
-                unconstrained.exposures.get(
-                    player_id,
-                    0.0,
-                ),
+                original_exposure,
                 result,
             )
 
@@ -572,6 +579,144 @@ def find_strategy_control_test(
         "unconstrained portfolio."
     )
 
+
+
+def find_combined_control_test(
+    candidates,
+    unconstrained,
+):
+    lock_options = []
+    candidate_counts = {}
+
+    for profile in candidates.profiles:
+        for player_id in set(profile.player_ids):
+            candidate_counts[player_id] = (
+                candidate_counts.get(player_id, 0) + 1
+            )
+
+    for player_id, candidate_count in candidate_counts.items():
+        original_exposure = unconstrained.exposures.get(
+            player_id,
+            0.0,
+        )
+
+        if (
+            original_exposure < 1.0
+            and candidate_count >= LINEUP_COUNT
+        ):
+            lock_options.append(
+                (original_exposure, player_id)
+            )
+
+    lock_options.sort(reverse=True)
+
+    exclude_options = sorted(
+        unconstrained.exposures.items(),
+        key=lambda item: item[1],
+        reverse=True,
+    )
+
+    strategy_names = (
+        "stacked",
+        "unstacked",
+        "qb_stack_1_plus",
+        "qb_stack_2_plus",
+        "bring_back_1_plus",
+        "rb_dst",
+    )
+
+    for lock_before, lock_player in lock_options:
+        for exclude_player, exclude_before in exclude_options:
+            if exclude_player == lock_player:
+                continue
+
+            for strategy_name in strategy_names:
+                original_strategy_count = strategy_count(
+                    unconstrained.profiles,
+                    strategy_name,
+                )
+
+                candidate_strategy_count = strategy_count(
+                    candidates.profiles,
+                    strategy_name,
+                )
+
+                if (
+                    original_strategy_count
+                    < min(candidate_strategy_count, LINEUP_COUNT)
+                ):
+                    target_count = original_strategy_count + 1
+                    strategy_kwargs = {
+                        "min_strategy_exposures": {
+                            strategy_name: target_count / LINEUP_COUNT,
+                        }
+                    }
+                    boundary_type = "minimum"
+                elif original_strategy_count > 0:
+                    target_count = original_strategy_count - 1
+                    strategy_kwargs = {
+                        "max_strategy_exposures": {
+                            strategy_name: target_count / LINEUP_COUNT,
+                        }
+                    }
+                    boundary_type = "maximum"
+                else:
+                    continue
+
+                try:
+                    result = select_nfl_portfolio(
+                        candidates,
+                        lineup_count=LINEUP_COUNT,
+                        locked_player_ids={lock_player},
+                        excluded_player_ids={exclude_player},
+                        **strategy_kwargs,
+                    )
+                except Stage2InfeasibleError:
+                    continue
+
+                lock_after = result.exposures.get(
+                    lock_player,
+                    0.0,
+                )
+                exclude_after = result.exposures.get(
+                    exclude_player,
+                    0.0,
+                )
+                strategy_after = strategy_count(
+                    result.profiles,
+                    strategy_name,
+                )
+
+                strategy_ok = (
+                    strategy_after >= target_count
+                    if boundary_type == "minimum"
+                    else strategy_after <= target_count
+                )
+
+                if (
+                    lock_after == 1.0
+                    and exclude_after == 0.0
+                    and strategy_ok
+                    and result.selected_lineup_count == LINEUP_COUNT
+                ):
+                    return {
+                        "lock_player": lock_player,
+                        "lock_before": lock_before,
+                        "lock_after": lock_after,
+                        "exclude_player": exclude_player,
+                        "exclude_before": exclude_before,
+                        "exclude_after": exclude_after,
+                        "strategy_name": strategy_name,
+                        "strategy_type": boundary_type,
+                        "strategy_target": target_count,
+                        "strategy_after": strategy_after,
+                        "result": result,
+                    }
+
+    raise Stage2InfeasibleError(
+        "Could not find a feasible combined lock, exclude, "
+        "and strategy-control portfolio."
+    )
 
 def test_site(
     site_name,
@@ -841,6 +986,55 @@ def test_site(
     print(
         f"Portfolio projection:  "
         f"{strategy_result.total_projection:.2f}"
+    )
+
+    combined = find_combined_control_test(
+        candidates,
+        unconstrained,
+    )
+
+    combined_result = combined["result"]
+
+    if combined_result.selected_lineup_count != LINEUP_COUNT:
+        raise ValueError(
+            f"{site_name} combined control test did not "
+            f"return exactly {LINEUP_COUNT} lineups."
+        )
+
+    print()
+    print(
+        f"{site_name} COMBINED CONTROL TEST PASSED"
+    )
+    print("-" * 88)
+    print(
+        f"Lock:                  "
+        f"{combined['lock_player']} "
+        f"{combined['lock_before']:.0%} -> "
+        f"{combined['lock_after']:.0%}"
+    )
+    print(
+        f"Exclude:               "
+        f"{combined['exclude_player']} "
+        f"{combined['exclude_before']:.0%} -> "
+        f"{combined['exclude_after']:.0%}"
+    )
+    print(
+        f"Strategy:              "
+        f"{combined['strategy_name']} "
+        f"({combined['strategy_type']})"
+    )
+    print(
+        f"Strategy boundary:     "
+        f"{combined['strategy_target']}/{LINEUP_COUNT}"
+    )
+    print(
+        f"Strategy realized:     "
+        f"{combined['strategy_after']}/{LINEUP_COUNT}"
+    )
+    print(
+        f"Selected lineups:      "
+        f"{combined_result.selected_lineup_count}/"
+        f"{LINEUP_COUNT}"
     )
 
     impossible_player_id = (
