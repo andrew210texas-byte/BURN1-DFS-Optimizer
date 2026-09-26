@@ -10,4 +10,5 @@ data/historical/nfl/*.mp4
 data/historical/nfl/*.jpg
 data/historical/nfl/*.pdf
 data/historical/nfl/*.docx
-data/historical/nfl/*.html
+data/historical/nfl/*.htmlmodeling/output/
+modeling/artifacts/
