@@ -496,14 +496,44 @@ def add_opponent_history(
     )
 
 
-def build_offensive_features(source):
+def build_offensive_features(
+    source,
+    allow_missing_targets=False,
+):
     """
     Build the complete V1 offensive feature table.
 
-    This is the canonical shared feature-engineering function used by
-    historical training and, after live-row support is added, inference.
+    Historical training rows contain observed DFS outcomes.
+
+    Live inference rows may intentionally have missing DFS outcomes because
+    the target game has not happened yet. Those rows are permitted only when
+    allow_missing_targets=True.
+
+    All historical predictors remain shifted backward in time, so an
+    inference row can consume prior games without using its own outcome.
     """
-    data = prepare_source_data(source)
+    data = source.copy()
+
+    if not allow_missing_targets:
+        missing_targets = (
+            data[
+                [
+                    "actual_dk_points",
+                    "actual_fd_points",
+                ]
+            ]
+            .isna()
+            .any(axis=1)
+            .sum()
+        )
+
+        if missing_targets != 0:
+            raise ValueError(
+                "Historical feature build received "
+                f"{missing_targets:,} rows with missing DFS targets."
+            )
+
+    data = prepare_source_data(data)
 
     features = data[
         BASE_COLUMNS
