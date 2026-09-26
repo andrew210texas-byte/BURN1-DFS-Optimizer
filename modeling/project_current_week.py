@@ -39,10 +39,10 @@ def load_manifest():
     return manifest, feature_columns
 
 
-def load_live_features(season, week):
+def load_live_features(season, week, slate):
     path = (
         LIVE_DATA_DIR
-        / f"offensive_features_{season}_week_{week}.parquet"
+        / f"offensive_features_{season}_week_{week}_{slate}.parquet"
     )
 
     if not path.exists():
@@ -208,10 +208,21 @@ def main():
         required=True,
     )
 
+    parser.add_argument(
+        "--slate",
+        type=str,
+        required=True,
+        help=(
+            "Slate identifier matching the live feature filename, "
+            "for example dk_2026_week3_sunday_main."
+        ),
+    )
+
     args = parser.parse_args()
 
     season = args.season
     week = args.week
+    slate = args.slate
 
     print("=" * 80)
     print("STEP 9C - CURRENT-WEEK DFS PROJECTIONS")
@@ -219,12 +230,14 @@ def main():
 
     print(f"\nSeason: {season}")
     print(f"Week:   {week}")
+    print(f"Slate:  {slate}")
 
     manifest, feature_columns = load_manifest()
 
     data, input_path = load_live_features(
         season=season,
         week=week,
+        slate=slate,
     )
 
     print(f"\nLoaded:")
@@ -325,12 +338,12 @@ def main():
 
     parquet_path = (
         OUTPUT_DIR
-        / f"projections_{season}_week_{week}_v1.parquet"
+        / f"projections_{season}_week_{week}_{slate}_v1.parquet"
     )
 
     csv_path = (
         OUTPUT_DIR
-        / f"projections_{season}_week_{week}_v1.csv"
+        / f"projections_{season}_week_{week}_{slate}_v1.csv"
     )
 
     output = output.sort_values(
