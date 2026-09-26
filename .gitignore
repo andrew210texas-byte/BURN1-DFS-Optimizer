@@ -17,3 +17,4 @@ modeling/artifacts/
 modeling/output/**
 modeling/artifacts/**
 data/historical/nfl/saas_profit_infrastructure_simulator.html
+data/historical/nfl/reference/
