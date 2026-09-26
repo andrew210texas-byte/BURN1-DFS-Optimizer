@@ -39,6 +39,7 @@ OFFENSIVE_POSITIONS = ["QB", "RB", "WR", "TE"]
 FRANCHISE_ALIASES = {
     "SD": "LAC",
     "OAK": "LV",
+    "JAC": "JAX",
 }
 
 CONTEXT_COLUMNS = [
@@ -326,6 +327,100 @@ def attach_schedule_context(player_stats, context):
     return joined
 
 
+def load_slate_teams(salary_path):
+    """Return the canonical NFL teams represented by one DFS salary slate."""
+    salary_path = Path(salary_path)
+
+    if not salary_path.exists():
+        raise FileNotFoundError(
+            f"Slate salary file not found: {salary_path}"
+        )
+
+    salary = pd.read_csv(salary_path)
+
+    if "TeamAbbrev" in salary.columns:
+        team_column = "TeamAbbrev"
+        site = "DraftKings"
+    elif "Team" in salary.columns:
+        team_column = "Team"
+        site = "FanDuel"
+    else:
+        raise ValueError(
+            "Unsupported salary file: expected DraftKings TeamAbbrev "
+            "or FanDuel Team column."
+        )
+
+    teams = normalize_team_series(
+        salary[team_column].dropna().astype(str).str.strip()
+    )
+    teams = sorted(set(teams))
+
+    if not teams:
+        raise ValueError("Salary slate contains no NFL teams.")
+
+    return site, teams, len(salary)
+
+
+def completed_game_ids(schedule):
+    """Identify games that have actual recorded results."""
+    required = ["game_id", "home_score", "away_score"]
+    missing = [column for column in required if column not in schedule.columns]
+
+    if missing:
+        raise ValueError(
+            "Schedule is missing completion fields: " + ", ".join(missing)
+        )
+
+    completed = schedule.loc[
+        schedule["home_score"].notna()
+        & schedule["away_score"].notna()
+    ].copy()
+
+    return set(completed["game_id"].dropna())
+
+
+def build_target_schedule(schedule, season, week, slate_teams, completed_ids):
+    """Select only unplayed games represented by the chosen salary slate."""
+    target = schedule.loc[
+        (schedule["season"] == season)
+        & (schedule["week"] == week)
+        & schedule["home_team"].isin(slate_teams)
+        & schedule["away_team"].isin(slate_teams)
+        & ~schedule["game_id"].isin(completed_ids)
+    ].copy()
+
+    if target.empty:
+        raise ValueError(
+            "No unplayed target games matched the selected salary slate."
+        )
+
+    target_teams = set(target["home_team"]) | set(target["away_team"])
+    missing_teams = sorted(set(slate_teams) - target_teams)
+
+    if missing_teams:
+        raise ValueError(
+            "Salary slate teams did not map to unplayed target games: "
+            + ", ".join(missing_teams)
+        )
+
+    target = target.sort_values(
+        ["gameday", "gametime", "game_id"]
+    ).reset_index(drop=True)
+
+    print("\nSELECTED DFS SLATE")
+    print("-" * 80)
+    for row in target.itertuples():
+        print(
+            f"{row.gameday}  {row.gametime}  "
+            f"{row.away_team} @ {row.home_team}  "
+            f"[{row.game_id}]"
+        )
+    print("-" * 80)
+    print(f"Games: {len(target)}")
+
+    return target
+
+
 def build_target_roster(
     rosters,
     target_context,
@@ -342,12 +437,12 @@ def build_target_roster(
 
     roster = roster.loc[
         roster["week"].notna()
-        & (roster["week"] < week)
+        & (roster["week"] <= week)
     ].copy()
 
     if roster.empty:
         raise ValueError(
-            "No roster snapshot exists before target week."
+            "No roster snapshot exists at or before target week."
         )
 
     latest_roster_week = int(roster["week"].max())
@@ -535,16 +630,27 @@ def main():
         required=True,
     )
 
+    parser.add_argument(
+        "--salary-file",
+        type=Path,
+        required=True,
+        help=(
+            "DraftKings or FanDuel salary CSV defining the exact target slate."
+        ),
+    )
+
     args = parser.parse_args()
 
     season = args.season
     week = args.week
+    salary_file = args.salary_file
 
     print("=" * 80)
     print("STEP 9B - LIVE NFL FEATURE BUILD")
     print("=" * 80)
     print(f"\nTarget season: {season}")
     print(f"Target week:   {week}")
+    print(f"Salary slate:  {salary_file}")
 
     OUTPUT_DIR.mkdir(
         parents=True,
@@ -582,9 +688,23 @@ def main():
         schedule["away_team"]
     )
 
-    target_schedule = print_target_schedule(
-        schedule,
-        week,
+    slate_site, slate_teams, salary_rows = load_slate_teams(
+        salary_file
+    )
+
+    print(
+        f"\nSalary slate loaded: {slate_site} | "
+        f"{salary_rows:,} rows | {len(slate_teams)} teams"
+    )
+
+    completed_ids = completed_game_ids(schedule)
+
+    target_schedule = build_target_schedule(
+        schedule=schedule,
+        season=season,
+        week=week,
+        slate_teams=slate_teams,
+        completed_ids=completed_ids,
     )
 
     expected_game_count = len(target_schedule)
@@ -611,16 +731,16 @@ def main():
 
     if target_team_count != expected_game_count * 2:
         raise ValueError(
-            "A team appears more than once in the target week."
+            "A team appears more than once in the selected slate."
         )
 
-    print("Target schedule integrity: PASSED")
+    print("Target slate schedule integrity: PASSED")
 
     context = build_team_game_context(schedule)
 
+    target_game_ids = set(target_schedule["game_id"])
     target_context = context.loc[
-        (context["season"] == season)
-        & (context["week"] == week)
+        context["game_id"].isin(target_game_ids)
     ].copy()
 
     if len(target_context) != expected_game_count * 2:
@@ -644,7 +764,8 @@ def main():
             OFFENSIVE_POSITIONS
         )
         & current_stats["player_id"].notna()
-        & (current_stats["week"] < week)
+        & current_stats["game_id"].isin(completed_ids)
+        & ~current_stats["game_id"].isin(target_game_ids)
     ].copy()
 
     current_stats["team"] = normalize_team_series(
@@ -690,7 +811,7 @@ def main():
         f"player-games: {len(current_stats):,}"
     )
     print(
-        f"Stat weeks currently available before target: "
+        f"Completed stat weeks available as history: "
         f"{completed_weeks}"
     )
 
@@ -740,8 +861,7 @@ def main():
     )
 
     target_features = features.loc[
-        (features["season"] == season)
-        & (features["week"] == week)
+        features["game_id"].isin(target_game_ids)
     ].copy()
 
     if len(target_features) != len(target_skeleton):
@@ -842,7 +962,7 @@ def main():
 
     output_path = (
         OUTPUT_DIR
-        / f"offensive_features_{season}_week_{week}.parquet"
+        / f"offensive_features_{season}_week_{week}_{salary_file.stem}.parquet"
     )
 
     target_features.to_parquet(
@@ -852,7 +972,7 @@ def main():
 
     schedule_output = (
         OUTPUT_DIR
-        / f"schedule_{season}_week_{week}.csv"
+        / f"schedule_{season}_week_{week}_{salary_file.stem}.csv"
     )
 
     target_schedule.to_csv(
