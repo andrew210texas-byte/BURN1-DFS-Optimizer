@@ -428,6 +428,23 @@ def run_burn1_nfl_portfolio(
         not in config.excluded_player_ids
     ]
 
+    def candidate_progress_callback(
+        current,
+        total,
+    ):
+        if status_callback is None:
+            return
+
+        event = Burn1StatusEvent(
+            status=STATUS_STAGE1,
+            message="GENERATING",
+        )
+
+        event.progress_current = int(current)
+        event.progress_total = int(total)
+
+        status_callback(event)
+
     candidate_pool = generate_nfl_candidates(
         stage1_players,
         salary_cap=salary_cap,
@@ -439,6 +456,9 @@ def run_burn1_nfl_portfolio(
         rb_dst_stack=config.rb_dst_stack,
         candidate_gpp_fraction=(
             config.candidate_gpp_fraction
+        ),
+        progress_callback=(
+            candidate_progress_callback
         ),
     )
 
@@ -489,13 +509,35 @@ def run_burn1_nfl_portfolio(
         for player in players
     }
 
-    lineups = [
-        _serialize_lineup(lineup, profile)
-        for lineup, profile in zip(
+    # Stage 2 selects candidates created during Stage 1.
+    # profile.lineup_number is therefore the Stage 1 candidate ID,
+    # not the final portfolio position.
+    #
+    # Preserve the candidate ID for debugging/backtesting, but expose
+    # clean final portfolio numbers 1..N to the application/UI/export.
+    lineups = []
+
+    for final_lineup_number, (lineup, profile) in enumerate(
+        zip(
             selection.lineups,
             selection.profiles,
+        ),
+        start=1,
+    ):
+        serialized_lineup = _serialize_lineup(
+            lineup,
+            profile,
         )
-    ]
+
+        serialized_lineup["candidate_lineup_number"] = (
+            serialized_lineup["lineup_number"]
+        )
+
+        serialized_lineup["lineup_number"] = (
+            final_lineup_number
+        )
+
+        lineups.append(serialized_lineup)
 
     result = Burn1RunResult(
         status=STATUS_COMPLETE,
