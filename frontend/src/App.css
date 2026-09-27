@@ -200,263 +200,1020 @@ button:disabled { cursor: not-allowed; opacity: .55; }
   .strategy-settings-card { grid-row: auto; }
 }
 
-/* BURN1 SYSTEM CONSOLE START */
+/* BURN1 LIVE RUN VISUALS START */
 
-.burn1-system-console {
-  position: absolute;
-  top: 15.2%;
-  right: 2.2%;
-  z-index: 300;
+/* ---------------------------------------------------------
+   CRISP SITE BUTTONS
+   Cover the text baked into the master image so the live
+   button label is rendered only once.
+   --------------------------------------------------------- */
 
-  width: 330px;
-  max-width: 21%;
+.site-button {
+  opacity: 1 !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  text-shadow: none !important;
 
-  padding: 14px;
+  background: #0b1016 !important;
 
-  border:
-    1px solid
-    rgba(255, 137, 31, 0.40);
+  border-color:
+    rgba(118, 129, 141, 0.42) !important;
 
-  border-radius: 7px;
+  color: #c7cdd3 !important;
+}
+
+.site-button:disabled {
+  opacity: 1 !important;
+}
+
+.site-button.selected {
+  background:
+    linear-gradient(
+      180deg,
+      #ffad4a 0%,
+      #ff771e 48%,
+      #ed5900 100%
+    ) !important;
+
+  border-color: #ff9b34 !important;
+
+  color: #090b0e !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.34),
+    0 0 15px rgba(255,108,17,0.34) !important;
+}
+
+/* ---------------------------------------------------------
+   IGNITE
+   --------------------------------------------------------- */
+
+.ignite-hit {
+  opacity: 1 !important;
 
   background:
     linear-gradient(
       180deg,
-      rgba(16, 20, 24, 0.99),
-      rgba(5, 8, 11, 0.99)
-    );
+      rgba(18, 16, 13, 0.98),
+      rgba(7, 8, 10, 0.99)
+    ) !important;
+
+  border:
+    1px solid
+    rgba(255, 126, 24, 0.92) !important;
+
+  color: #ffb45e !important;
 
   box-shadow:
-    0 16px 40px
-    rgba(0, 0, 0, 0.48);
-
-  color: #e8eaec;
+    inset 0 0 22px rgba(255, 103, 10, 0.10),
+    0 0 20px rgba(255, 96, 5, 0.34) !important;
 }
 
-.system-head {
+.ignite-hit:disabled {
+  opacity: 1 !important;
+}
+
+.ignite-label {
+  width: 100%;
+  height: 100%;
+
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: center;
 
-  gap: 10px;
-
-  padding-bottom: 10px;
-
-  border-bottom:
-    1px solid
-    rgba(255,255,255,0.08);
-}
-
-.system-head > div:first-child {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.system-head span {
-  color: #ff9326;
+  color: #ffb35c;
 
   font-family:
     Consolas,
+    "Courier New",
     monospace;
 
-  font-size: 9px;
+  font-size:
+    clamp(14px, 1.12vw, 20px);
 
-  letter-spacing: 1.4px;
+  font-weight: 900;
+
+  letter-spacing: 2px;
+
+  text-shadow:
+    0 0 12px
+    rgba(255, 119, 20, 0.55);
 }
 
-.system-head strong {
-  font-size: 13px;
-  letter-spacing: 1px;
+/* ---------------------------------------------------------
+   REAL RUN PROGRESS BAR
+   This dark track masks the baked-in orange line.
+   --------------------------------------------------------- */
+
+.burn1-progress-engine {
+  position: fixed;
+
+  left: 46.2%;
+  top: 22.75%;
+
+  width: 26.4%;
+  height: 8px;
+
+  z-index: 74;
+
+  pointer-events: none;
 }
 
-.system-badge {
-  min-width: 68px;
+.burn1-progress-track {
+  position: relative;
 
-  padding: 5px 8px;
-
-  border-radius: 3px;
-
-  text-align: center;
-
-  font-family:
-    Consolas,
-    monospace;
-
-  font-size: 9px;
-
-  font-weight: 800;
-}
-
-.system-badge.online {
-  color: #83efa7;
-
-  background:
-    rgba(25, 126, 65, 0.18);
-
-  border:
-    1px solid
-    rgba(74, 214, 121, 0.38);
-}
-
-.system-badge.offline {
-  color: #ff8278;
-
-  background:
-    rgba(150, 30, 24, 0.20);
-
-  border:
-    1px solid
-    rgba(244, 77, 65, 0.42);
-}
-
-.system-grid {
-  display: grid;
-
-  grid-template-columns:
-    1fr 1fr;
-
-  gap: 1px;
-
-  margin-top: 10px;
-
-  background:
-    rgba(255,255,255,0.05);
-
-  border:
-    1px solid
-    rgba(255,255,255,0.05);
-}
-
-.system-grid > div {
-  min-width: 0;
-
-  padding: 8px 9px;
-
-  background:
-    rgba(7, 10, 13, 0.98);
-
-  display: flex;
-  flex-direction: column;
-
-  gap: 3px;
-}
-
-.system-grid span {
-  color: #727980;
-
-  font-size: 8px;
-
-  letter-spacing: 0.7px;
-
-  text-transform: uppercase;
-}
-
-.system-grid strong {
-  color: #e5e8ea;
-
-  font-family:
-    Consolas,
-    monospace;
-
-  font-size: 10px;
+  width: 100%;
+  height: 5px;
 
   overflow: hidden;
 
-  text-overflow: ellipsis;
+  border-radius: 999px;
+
+  background:
+    #242a30;
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(0,0,0,0.65);
 }
 
-.system-grid .system-wide {
-  grid-column:
-    1 / -1;
+.burn1-progress-fill {
+  position: relative;
+
+  width: 0%;
+  height: 100%;
+
+  overflow: hidden;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      #d84e00,
+      #ff861d,
+      #ffc266
+    );
+
+  box-shadow:
+    0 0 12px
+    rgba(255, 113, 16, 0.78);
+
+  transition:
+    width 420ms
+    cubic-bezier(.2,.8,.2,1);
 }
 
-.system-grid .system-wide strong {
-  white-space: normal;
-  line-height: 1.35;
+.burn1-progress-light {
+  position: absolute;
+
+  right: -4px;
+  top: 50%;
+
+  width: 10px;
+  height: 10px;
+
+  transform:
+    translateY(-50%);
+
+  border-radius: 50%;
+
+  background: #fff3d8;
+
+  box-shadow:
+    0 0 6px #ffffff,
+    0 0 14px #ff9b31,
+    0 0 22px #ff6811;
 }
 
-.system-actions {
-  display: grid;
-
-  grid-template-columns:
-    1fr 1fr;
-
-  gap: 7px;
-
-  margin-top: 10px;
+.status-ready
+.burn1-progress-fill {
+  width: 0%;
 }
 
-.system-actions button {
-  min-height: 35px;
+.status-queued
+.burn1-progress-fill {
+  width: 7%;
+}
+
+.status-validating
+.burn1-progress-fill {
+  width: 14%;
+}
+
+.status-stage1_generating
+.burn1-progress-fill {
+  width: 53%;
+}
+
+.status-stage2_optimizing
+.burn1-progress-fill {
+  width: 84%;
+}
+
+.status-complete
+.burn1-progress-fill {
+  width: 100%;
+}
+
+.status-error
+.burn1-progress-fill {
+  width: 0%;
+}
+
+.burn1-progress-engine.running
+.burn1-progress-fill::after {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  bottom: 0;
+
+  width: 44%;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(255,255,255,0.65),
+      transparent
+    );
+
+  animation:
+    burn1-progress-scan
+    1.05s linear infinite;
+}
+
+@keyframes burn1-progress-scan {
+  from {
+    left: -50%;
+  }
+
+  to {
+    left: 115%;
+  }
+}
+
+/* ---------------------------------------------------------
+   ACTIVE FOOTBALL ROUTES
+   Rendered only while the optimizer is running.
+   --------------------------------------------------------- */
+
+.burn1-route-field {
+  position: fixed;
+
+  left: 26.2%;
+  top: 32.0%;
+
+  width: 49.0%;
+  height: 23.5%;
+
+  z-index: 70;
+
+  overflow: visible;
+
+  pointer-events: none;
+}
+
+.burn1-route {
+  fill: none;
+
+  stroke-width: 3.2;
+
+  stroke-linecap: round;
+
+  stroke-dasharray:
+    15 13;
+
+  opacity: 0.78;
+
+  animation:
+    burn1-route-flow
+    0.78s linear infinite;
+}
+
+.burn1-route.blue {
+  stroke: #25d8ff;
+
+  filter:
+    url(#burn1-blue-glow);
+}
+
+.burn1-route.orange {
+  stroke: #ff861f;
+
+  filter:
+    url(#burn1-orange-glow);
+}
+
+.burn1-tracker.blue {
+  fill: #baf5ff;
+
+  stroke: #27d7ff;
+
+  stroke-width: 3;
+
+  filter:
+    url(#burn1-blue-glow);
+}
+
+.burn1-tracker.orange {
+  fill: #fff0d5;
+
+  stroke: #ff8a20;
+
+  stroke-width: 3;
+
+  filter:
+    url(#burn1-orange-glow);
+}
+
+.burn1-tracker.secondary {
+  opacity: 0.82;
+}
+
+.burn1-tracker.tertiary {
+  opacity: 0.62;
+}
+
+/* Stage 1 focuses on candidate route generation. */
+
+.burn1-route-field.status-stage1_generating
+.burn1-blue-routes {
+  opacity: 1;
+}
+
+.burn1-route-field.status-stage1_generating
+.burn1-orange-routes {
+  opacity: 0.38;
+}
+
+/* Stage 2 visually shifts toward portfolio selection. */
+
+.burn1-route-field.status-stage2_optimizing
+.burn1-blue-routes {
+  opacity: 0.42;
+}
+
+.burn1-route-field.status-stage2_optimizing
+.burn1-orange-routes {
+  opacity: 1;
+}
+
+@keyframes burn1-route-flow {
+  from {
+    stroke-dashoffset: 56;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .burn1-route,
+  .burn1-progress-engine.running
+  .burn1-progress-fill::after {
+    animation: none;
+  }
+}
+
+/* BURN1 LIVE RUN VISUALS END */
+
+/* BURN1 VISUAL ALIGNMENT FIX START */
+
+/* ==========================================================
+   IGNITE
+   Fully hide the original text baked into BURN1_UI.png.
+   ========================================================== */
+
+.ignite-hit {
+  position: absolute;
+
+  isolation: isolate;
+
+  overflow: hidden;
+
+  opacity: 1 !important;
+
+  background: #07090c !important;
+  background-image: none !important;
 
   border:
     1px solid
-    rgba(255, 137, 31, 0.42);
+    #ff8522 !important;
 
-  border-radius: 4px;
+  box-shadow:
+    inset 0 0 24px
+      rgba(255, 103, 8, 0.10),
+    0 0 18px
+      rgba(255, 100, 8, 0.40) !important;
+}
+
+.ignite-hit::before {
+  content: "";
+
+  position: absolute;
+
+  inset: 1px;
+
+  z-index: 0;
+
+  border-radius: inherit;
 
   background:
     linear-gradient(
       180deg,
-      #171513,
-      #0b0b0b
+      #0c0d0f 0%,
+      #07090c 100%
+    );
+}
+
+.ignite-label {
+  position: relative;
+
+  z-index: 2;
+
+  color: #ffad4c !important;
+
+  text-shadow:
+    0 0 10px
+    rgba(255, 112, 16, 0.55);
+}
+
+
+/* ==========================================================
+   PIPELINE
+   Our element does two separate jobs:
+
+   1. Mask the static progress line baked into the artwork.
+   2. Draw the real BURN1 progress bar above the stage circles.
+
+   The transparent windows preserve the three circles.
+   ========================================================== */
+
+.burn1-progress-engine {
+  position: fixed !important;
+
+  left: 44.1% !important;
+  top: 20.72% !important;
+
+  width: 33.4% !important;
+  height: 7px !important;
+
+  z-index: 76 !important;
+
+  pointer-events: none;
+}
+
+
+/* Mask the original static line in BURN1_UI.png. */
+
+.burn1-progress-engine::after {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  top: 31px;
+
+  width: 100%;
+  height: 5px;
+
+  z-index: -1;
+
+  background:
+    linear-gradient(
+      to right,
+
+      #1a1f24 0%,
+      #1a1f24 4.5%,
+
+      transparent 4.5%,
+      transparent 10.8%,
+
+      #1a1f24 10.8%,
+      #1a1f24 42.2%,
+
+      transparent 42.2%,
+      transparent 50.6%,
+
+      #1a1f24 50.6%,
+      #1a1f24 81.3%,
+
+      transparent 81.3%,
+      transparent 89.5%,
+
+      #1a1f24 89.5%,
+      #1a1f24 100%
     );
 
-  color: #ffc079;
-
-  font-family:
-    Consolas,
-    monospace;
-
-  font-size: 9px;
-
-  font-weight: 800;
-
-  cursor: pointer;
+  opacity: 0.98;
 }
 
-.system-actions button:hover:not(:disabled) {
-  border-color: #ff9224;
-  color: #ffd39f;
-}
 
-.system-actions button:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
+/* Real progress track. */
 
-.system-footer {
-  display: grid;
+.burn1-progress-track {
+  position: relative;
 
-  grid-template-columns:
-    auto 1fr auto auto;
+  width: 100%;
+  height: 4px !important;
 
-  gap: 7px;
+  overflow: hidden;
 
-  align-items: center;
-
-  margin-top: 9px;
-
-  padding-top: 9px;
-
-  border-top:
+  border:
     1px solid
-    rgba(255,255,255,0.07);
+    rgba(91, 101, 111, 0.42);
 
-  font-family:
-    Consolas,
-    monospace;
+  border-radius: 999px;
 
-  font-size: 8px;
+  background:
+    #151a1f !important;
+
+  box-shadow:
+    inset 0 1px 3px
+    rgba(0,0,0,0.78);
 }
 
-.system-footer span {
-  color: #686f75;
+
+.burn1-progress-fill {
+  height: 100%;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      #dc4c00 0%,
+      #ff7615 55%,
+      #ffad42 100%
+    ) !important;
+
+  box-shadow:
+    0 0 7px
+    rgba(255, 104, 12, 0.72) !important;
+
+  transition:
+    width 450ms
+    cubic-bezier(.2,.8,.2,1);
 }
 
-.system-footer strong {
-  color: #b5bbc0;
+
+/* Kill the oversized white endpoint. */
+
+.burn1-progress-light {
+  display: none !important;
 }
 
-/* BURN1 SYSTEM CONSOLE END */
+
+/* Empty before the run begins. */
+
+.status-ready
+.burn1-progress-fill {
+  width: 0% !important;
+}
+
+
+/* Starting request. */
+
+.status-queued
+.burn1-progress-fill {
+  width: 5% !important;
+}
+
+
+/* Validation. */
+
+.status-validating
+.burn1-progress-fill {
+  width: 12% !important;
+}
+
+
+/* Stage 1 candidate generation. */
+
+.status-stage1_generating
+.burn1-progress-fill {
+  width: 55% !important;
+}
+
+
+/* Stage 2 portfolio optimization. */
+
+.status-stage2_optimizing
+.burn1-progress-fill {
+  width: 86% !important;
+}
+
+
+/* Verified completion. */
+
+.status-complete
+.burn1-progress-fill {
+  width: 100% !important;
+}
+
+
+/* Errors reset the indicator. */
+
+.status-error
+.burn1-progress-fill {
+  width: 0% !important;
+}
+
+
+/* Moving light exists only while BURN1 is actually running. */
+
+.burn1-progress-engine.running
+.burn1-progress-fill::after {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  bottom: 0;
+
+  width: 22%;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 223, 179, 0.70),
+      transparent
+    );
+
+  animation:
+    burn1-aligned-progress-scan
+    1.15s linear infinite;
+}
+
+
+@keyframes burn1-aligned-progress-scan {
+  from {
+    left: -25%;
+  }
+
+  to {
+    left: 105%;
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .burn1-progress-engine.running
+  .burn1-progress-fill::after {
+    animation: none;
+  }
+}
+
+/* BURN1 VISUAL ALIGNMENT FIX END */
+
+/* BURN1 MOTION + PROGRESS FIX START */
+
+/* ==========================================================
+   CONTAIN ALL ROUTE ANIMATION INSIDE THE FOOTBALL FIELD
+   ========================================================== */
+
+.burn1-route-field {
+  position: fixed !important;
+
+  left: 28.0% !important;
+  top: 35.2% !important;
+
+  width: 45.5% !important;
+  height: 21.0% !important;
+
+  overflow: hidden !important;
+
+  clip-path:
+    inset(
+      0
+      0
+      0
+      0
+      round 8px
+    );
+
+  pointer-events: none !important;
+}
+
+
+/* Pull the routes away from the extreme SVG edges. */
+
+.burn1-route-field
+.burn1-blue-routes {
+  transform:
+    translateX(35px)
+    scaleX(0.92);
+
+  transform-origin: center;
+}
+
+.burn1-route-field
+.burn1-orange-routes {
+  transform:
+    translateX(-35px)
+    scaleX(0.92);
+
+  transform-origin: center;
+}
+
+
+/* Keep the glow from becoming enormous near the boundary. */
+
+.burn1-route {
+  stroke-width: 3px !important;
+}
+
+.burn1-tracker {
+  vector-effect:
+    non-scaling-stroke;
+}
+
+
+/* ==========================================================
+   CLEAN REAL-TIME ACTIVITY BAR
+   ========================================================== */
+
+/* Remove the previous artwork-line masking segments. */
+
+.burn1-progress-engine::after {
+  display: none !important;
+}
+
+
+/* Put the BURN1 activity rail clearly above the 1-2-3 artwork. */
+
+.burn1-progress-engine {
+  position: fixed !important;
+
+  left: 42.4% !important;
+  top: 21.75% !important;
+
+  width: 34.0% !important;
+  height: 9px !important;
+
+  z-index: 85 !important;
+
+  pointer-events: none !important;
+}
+
+
+.burn1-progress-track {
+  position: relative;
+
+  width: 100% !important;
+  height: 6px !important;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(85, 97, 108, 0.58) !important;
+
+  border-radius: 999px;
+
+  background:
+    #10161c !important;
+
+  box-shadow:
+    inset 0 1px 4px
+    rgba(0, 0, 0, 0.92) !important;
+}
+
+
+/* Always use a full-width fill element.
+   ScaleX controls the visible progress. */
+
+.burn1-progress-fill {
+  width: 100% !important;
+  height: 100% !important;
+
+  transform:
+    scaleX(0);
+
+  transform-origin:
+    left center;
+
+  border-radius:
+    inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      #d44800 0%,
+      #ff6d0d 45%,
+      #ff9c32 75%,
+      #ffc46c 100%
+    ) !important;
+
+  box-shadow:
+    0 0 9px
+    rgba(255, 101, 10, 0.70) !important;
+
+  transition:
+    transform
+    450ms
+    cubic-bezier(.2,.8,.2,1);
+}
+
+
+/* Idle = completely empty. */
+
+.burn1-progress-engine:not(.running)
+.burn1-progress-fill {
+  transform:
+    scaleX(0) !important;
+
+  animation:
+    none !important;
+}
+
+
+/* Queued. */
+
+.burn1-progress-engine.running.status-queued
+.burn1-progress-fill {
+  transform:
+    scaleX(0.06);
+}
+
+
+/* Validation. */
+
+.burn1-progress-engine.running.status-validating
+.burn1-progress-fill {
+  transform:
+    scaleX(0.12);
+}
+
+
+/* Stage 1 visibly advances while candidates are generated.
+
+   This is an activity visualization, not a fake numeric
+   percentage. It advances toward the Stage-1 boundary while
+   the real solver remains in stage1_generating.
+*/
+
+.burn1-progress-engine.running.status-stage1_generating
+.burn1-progress-fill {
+  animation:
+    burn1-stage1-advance
+    28s
+    cubic-bezier(.12,.62,.24,1)
+    forwards !important;
+}
+
+
+@keyframes burn1-stage1-advance {
+  0% {
+    transform:
+      scaleX(0.12);
+  }
+
+  20% {
+    transform:
+      scaleX(0.26);
+  }
+
+  45% {
+    transform:
+      scaleX(0.39);
+  }
+
+  70% {
+    transform:
+      scaleX(0.50);
+  }
+
+  100% {
+    transform:
+      scaleX(0.62);
+  }
+}
+
+
+/* Stage 2 moves decisively toward completion. */
+
+.burn1-progress-engine.running.status-stage2_optimizing
+.burn1-progress-fill {
+  transform:
+    scaleX(0.90) !important;
+
+  animation:
+    none !important;
+}
+
+
+/* If COMPLETE is observed before running switches off,
+   briefly reach the end. */
+
+.burn1-progress-engine.running.status-complete
+.burn1-progress-fill {
+  transform:
+    scaleX(1) !important;
+
+  animation:
+    none !important;
+}
+
+
+/* Error resets it. */
+
+.burn1-progress-engine.status-error
+.burn1-progress-fill {
+  transform:
+    scaleX(0) !important;
+
+  animation:
+    none !important;
+}
+
+
+/* ==========================================================
+   LIVE PROCESSING TRACKER
+   Makes activity obvious even if Stage 1 lasts a long time.
+   ========================================================== */
+
+.burn1-progress-engine.running
+.burn1-progress-track::after {
+  content: "";
+
+  position: absolute;
+
+  top: -1px;
+  bottom: -1px;
+
+  width: 13%;
+
+  z-index: 4;
+
+  border-radius:
+    999px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 245, 222, 0.95),
+      rgba(255, 154, 52, 0.80),
+      transparent
+    );
+
+  filter:
+    drop-shadow(
+      0 0 5px
+      rgba(255, 139, 34, 0.95)
+    );
+
+  animation:
+    burn1-processing-tracker
+    1.35s
+    linear
+    infinite;
+}
+
+
+@keyframes burn1-processing-tracker {
+  from {
+    left: -15%;
+  }
+
+  to {
+    left: 103%;
+  }
+}
+
+
+/* Don't render the old endpoint dot. */
+
+.burn1-progress-light {
+  display:
+    none !important;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+
+  .burn1-progress-engine.running
+  .burn1-progress-track::after,
+
+  .burn1-progress-engine.running.status-stage1_generating
+  .burn1-progress-fill {
+
+    animation:
+      none !important;
+  }
+
+  .burn1-progress-engine.running.status-stage1_generating
+  .burn1-progress-fill {
+
+    transform:
+      scaleX(0.62) !important;
+  }
+}
+
+/* BURN1 MOTION + PROGRESS FIX END */

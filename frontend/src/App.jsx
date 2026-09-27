@@ -980,128 +980,6 @@ function App() {
             onClick={() => switchView(key)}
           />
         ))}
-
-        {view === "settings" && (
-          <aside className="burn1-system-console">
-            <div className="system-head">
-              <div>
-                <span>PLATFORM STATUS</span>
-                <strong>BURN1 SYSTEM</strong>
-              </div>
-
-              <div
-                className={
-                  backendStatus === "READY"
-                    ? "system-badge online"
-                    : "system-badge offline"
-                }
-              >
-                {backendStatus}
-              </div>
-            </div>
-
-            <div className="system-grid">
-              <div>
-                <span>API Version</span>
-                <strong>{apiMeta.version}</strong>
-              </div>
-
-              <div>
-                <span>Engine</span>
-                <strong>{apiMeta.engine}</strong>
-              </div>
-
-              <div>
-                <span>Active Site</span>
-                <strong>{siteCode(site)}</strong>
-              </div>
-
-              <div>
-                <span>Player Pool</span>
-                <strong>
-                  {playerPoolMeta?.player_count ??
-                    playerPool.length}
-                </strong>
-              </div>
-
-              <div>
-                <span>Salary Cap</span>
-                <strong>
-                  $
-                  {Number(
-                    playerPoolMeta?.salary_cap ??
-                      (site === "dk"
-                        ? 50000
-                        : 60000)
-                  ).toLocaleString()}
-                </strong>
-              </div>
-
-              <div>
-                <span>API Latency</span>
-                <strong>
-                  {apiMeta.latencyMs == null
-                    ? "N/A"
-                    : `${apiMeta.latencyMs} ms`}
-                </strong>
-              </div>
-
-              <div className="system-wide">
-                <span>Last Checked</span>
-                <strong>
-                  {formatSystemTime(
-                    apiMeta.lastChecked
-                  )}
-                </strong>
-              </div>
-
-              <div className="system-wide">
-                <span>Connection</span>
-                <strong>
-                  {backendDetail}
-                </strong>
-              </div>
-            </div>
-
-            <div className="system-actions">
-              <button
-                type="button"
-                disabled={systemCheckRunning}
-                onClick={runPlatformCheck}
-              >
-                {systemCheckRunning
-                  ? "CHECKING..."
-                  : "CHECK PLATFORM"}
-              </button>
-
-              <button
-                type="button"
-                disabled={
-                  playerPoolLoading ||
-                  systemCheckRunning
-                }
-                onClick={() =>
-                  loadPlayerPool(site, true)
-                }
-              >
-                {playerPoolLoading
-                  ? "REFRESHING..."
-                  : "REFRESH POOL"}
-              </button>
-            </div>
-
-            <div className="system-footer">
-              <span>Solver</span>
-              <strong>CP-SAT / OR-TOOLS</strong>
-
-              <span>History</span>
-              <strong>
-                {runHistory.length}/
-                {RUN_HISTORY_LIMIT}
-              </strong>
-            </div>
-          </aside>
-        )}
         <button className="top-hit top-sport" onClick={() => { setView("settings"); notify("NFL V1 is the active sport engine."); }} aria-label="Sport" />
         <button className="top-hit top-slate" onClick={() => { setView("settings"); notify("Week 3 - Main is the active loaded slate."); }} aria-label="Slate" />
         <button className="top-hit top-gear" onClick={() => switchView("settings")} aria-label="Settings" />
@@ -1185,7 +1063,7 @@ function App() {
 
                 return (
                   <button key={id} className="quick-player-row" onClick={() => useQuickPlayer(player)}>
-                    <span><strong>{player.name}</strong><small>{player.position} Â· {player.team} vs {player.opponent}</small></span>
+                    <span><strong>{player.name}</strong><small>{player.position}  |  {player.team} vs {player.opponent}</small></span>
                     <span>${Number(player.salary).toLocaleString()}</span>
                     <span>{Number(player.projection).toFixed(2)}</span>
                     <b className={active ? "active" : ""}>
@@ -1223,10 +1101,185 @@ function App() {
           onClick={ignite}
           aria-label="Ignite BURN1"
         >
-          {running ? <span>{String(runStatus).replaceAll("_", " ").toUpperCase()}</span> : null}
+          <span className="ignite-label">IGNITE</span>
         </button>
 
         <button className="view-all-hit" onClick={() => setView("exposures")} aria-label="View all exposures" />
+
+
+        {view === "optimizer" && (
+          <>
+            <div
+              className={`burn1-progress-engine status-${runStatus} ${
+                running ? "running" : ""
+              }`}
+              aria-hidden="true"
+            >
+              <div className="burn1-progress-track">
+                <div className="burn1-progress-fill">
+                  <span className="burn1-progress-light" />
+                </div>
+              </div>
+            </div>
+
+            {running && (
+              <svg
+                className={`burn1-route-field status-${runStatus}`}
+                viewBox="0 0 1000 340"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                <defs>
+                  <filter
+                    id="burn1-blue-glow"
+                    x="-100%"
+                    y="-100%"
+                    width="300%"
+                    height="300%"
+                  >
+                    <feGaussianBlur
+                      stdDeviation="6"
+                      result="blur"
+                    />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+
+                  <filter
+                    id="burn1-orange-glow"
+                    x="-100%"
+                    y="-100%"
+                    width="300%"
+                    height="300%"
+                  >
+                    <feGaussianBlur
+                      stdDeviation="7"
+                      result="blur"
+                    />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+
+                <g className="burn1-blue-routes">
+                  <path
+                    id="burn1-blue-route-1"
+                    className="burn1-route blue"
+                    d="M55 260 C180 220 230 90 475 155"
+                  />
+
+                  <path
+                    id="burn1-blue-route-2"
+                    className="burn1-route blue"
+                    d="M85 170 C210 120 285 245 480 175"
+                  />
+
+                  <path
+                    id="burn1-blue-route-3"
+                    className="burn1-route blue"
+                    d="M145 300 C260 275 310 200 480 195"
+                  />
+
+                  <circle
+                    className="burn1-tracker blue"
+                    r="8"
+                  >
+                    <animateMotion
+                      dur="1.45s"
+                      repeatCount="indefinite"
+                    >
+                      <mpath href="#burn1-blue-route-1" />
+                    </animateMotion>
+                  </circle>
+
+                  <circle
+                    className="burn1-tracker blue secondary"
+                    r="6"
+                  >
+                    <animateMotion
+                      dur="1.9s"
+                      repeatCount="indefinite"
+                    >
+                      <mpath href="#burn1-blue-route-2" />
+                    </animateMotion>
+                  </circle>
+
+                  <circle
+                    className="burn1-tracker blue tertiary"
+                    r="5"
+                  >
+                    <animateMotion
+                      dur="2.25s"
+                      repeatCount="indefinite"
+                    >
+                      <mpath href="#burn1-blue-route-3" />
+                    </animateMotion>
+                  </circle>
+                </g>
+
+                <g className="burn1-orange-routes">
+                  <path
+                    id="burn1-orange-route-1"
+                    className="burn1-route orange"
+                    d="M525 165 C680 80 785 105 955 195"
+                  />
+
+                  <path
+                    id="burn1-orange-route-2"
+                    className="burn1-route orange"
+                    d="M520 185 C675 260 790 260 945 130"
+                  />
+
+                  <path
+                    id="burn1-orange-route-3"
+                    className="burn1-route orange"
+                    d="M520 205 C655 305 815 290 945 245"
+                  />
+
+                  <circle
+                    className="burn1-tracker orange"
+                    r="8"
+                  >
+                    <animateMotion
+                      dur="1.35s"
+                      repeatCount="indefinite"
+                    >
+                      <mpath href="#burn1-orange-route-1" />
+                    </animateMotion>
+                  </circle>
+
+                  <circle
+                    className="burn1-tracker orange secondary"
+                    r="6"
+                  >
+                    <animateMotion
+                      dur="1.85s"
+                      repeatCount="indefinite"
+                    >
+                      <mpath href="#burn1-orange-route-2" />
+                    </animateMotion>
+                  </circle>
+
+                  <circle
+                    className="burn1-tracker orange tertiary"
+                    r="5"
+                  >
+                    <animateMotion
+                      dur="2.15s"
+                      repeatCount="indefinite"
+                    >
+                      <mpath href="#burn1-orange-route-3" />
+                    </animateMotion>
+                  </circle>
+                </g>
+              </svg>
+            )}
+          </>
+        )}
 
         {(running || result) && (
           <section className="live-telemetry">
@@ -1272,7 +1325,7 @@ function App() {
           <section className="detail-view">
             <header className="detail-header">
               <div className="detail-title">
-                <div className="eyebrow">BURN1 DFS Â· {siteCode(site)} Â· WEEK 3 MAIN</div>
+                <div className="eyebrow">BURN1 DFS  |  {siteCode(site)}  |  WEEK 3 MAIN</div>
                 <h1>{view === "playerPool" ? "PLAYER POOL" : view.toUpperCase()}</h1>
               </div>
               <div className="detail-header-actions">
@@ -1301,7 +1354,7 @@ function App() {
                         <button key={entry.id} className={`history-card ${activeRunId === entry.id ? "active" : ""}`} onClick={() => loadHistoricalRun(entry)}>
                           <div><b className={entry.site_key === "dk" ? "dk-badge" : "fd-badge"}>{siteCode(entry.site_key)}</b><span>{formatRunTime(entry.completed_at)}</span></div>
                           <strong>{entry.lineup_count} LINEUPS</strong>
-                          <small>{Number(entry.total_projection).toFixed(2)} TOTAL PROJ Â· {entry.solver_status}</small>
+                          <small>{Number(entry.total_projection).toFixed(2)} TOTAL PROJ  |  {entry.solver_status}</small>
                         </button>
                       ))}
                     </div>
@@ -1314,7 +1367,7 @@ function App() {
                   <div className="lineup-grid">
                     {result.lineups.map((lineup) => (
                       <article className="lineup-card" key={lineup.lineup_number}>
-                        <header><strong>LINEUP {lineup.lineup_number}</strong><span>${Number(lineup.total_salary).toLocaleString()} Â· {Number(lineup.total_projection).toFixed(2)}</span></header>
+                        <header><strong>LINEUP {lineup.lineup_number}</strong><span>${Number(lineup.total_salary).toLocaleString()}  |  {Number(lineup.total_projection).toFixed(2)}</span></header>
                         {lineup.players.map((player) => (
                           <div className="lineup-player" key={`${lineup.lineup_number}-${player.player_id}-${player.roster_slot}`}>
                             <strong>{player.roster_slot}</strong><span>{player.name}</span><span>{player.team} vs {player.opponent}</span><span>${Number(player.salary).toLocaleString()}</span><b>{Number(player.projection).toFixed(2)}</b>
