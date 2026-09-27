@@ -419,8 +419,17 @@ def run_burn1_nfl_portfolio(
         "Generating Stage 1 candidate lineups.",
     )
 
+    # Excluded players must never consume Stage 1 candidate slots.
+    # Stage 2 still enforces the exclusion as a second safety layer.
+    stage1_players = [
+        player
+        for player in players
+        if player.player_id
+        not in config.excluded_player_ids
+    ]
+
     candidate_pool = generate_nfl_candidates(
-        players,
+        stage1_players,
         salary_cap=salary_cap,
         candidate_count=config.candidate_count,
         min_unique_players=config.min_unique_players,
