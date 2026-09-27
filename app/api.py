@@ -15,6 +15,12 @@ from app.burn1_contract import (
 from run_burn1_live import SITE_CONFIG, load_players
 
 
+from app.intelligence.foundation import (
+    create_run_archive,
+    readiness_report,
+    update_run_archive,
+)
+
 app = FastAPI(
     title="BURN1 DFS API",
     version="1.1.0",
@@ -161,9 +167,32 @@ def get_player_pool(site_key: str):
     }
 
 
+
+@app.get("/api/intelligence/readiness")
+def intelligence_readiness():
+    return readiness_report(
+        SITE_CONFIG
+    )
+
 def update_job(job_id: str, **values):
     with jobs_lock:
         jobs[job_id].update(values)
+
+    try:
+        update_run_archive(
+            job_id,
+            status=values.get("status"),
+            message=values.get("message"),
+            result=values.get("result"),
+            error=values.get("error"),
+        )
+    except Exception as exc:
+        print(
+            "[BURN1 Intelligence] "
+            "Run archive update warning: "
+            f"{exc}",
+            flush=True,
+        )
 
 
 def run_job(
@@ -344,6 +373,38 @@ def start_run(request: Burn1RunRequest):
         )
 
     job_id = str(uuid4())
+
+    try:
+        site_key = request.site.lower()
+
+        if site_key in SITE_CONFIG:
+            site = SITE_CONFIG[site_key]
+
+            request_data = (
+                request.model_dump(
+                    mode="json"
+                )
+                if hasattr(
+                    request,
+                    "model_dump",
+                )
+                else request.dict()
+            )
+
+            create_run_archive(
+                job_id=job_id,
+                request_data=request_data,
+                site_key=site_key,
+                site_name=site["site_name"],
+                pool_file=site["pool_file"],
+            )
+    except Exception as exc:
+        print(
+            "[BURN1 Intelligence] "
+            "Run archive start warning: "
+            f"{exc}",
+            flush=True,
+        )
 
     with jobs_lock:
         jobs[job_id] = {

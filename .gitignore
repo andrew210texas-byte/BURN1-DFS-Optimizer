@@ -20,3 +20,8 @@ data/historical/nfl/saas_profit_infrastructure_simulator.html
 data/historical/nfl/reference/
 
 data/live/
+
+# BURN1 Intelligence local archives
+data/snapshots/
+data/runs/
+data/backtests/
