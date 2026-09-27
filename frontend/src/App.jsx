@@ -203,6 +203,7 @@ function App() {
 
   const [site, setSite] = useState(initialSite);
   const [view, setView] = useState("optimizer");
+  const [lineupsUnread, setLineupsUnread] = useState(false);
   const [lineupCount, setLineupCount] = useState(20);
   const [candidateCount, setCandidateCount] = useState(60);
   const [minUnique, setMinUnique] = useState(2);
@@ -244,8 +245,14 @@ function App() {
   const [runError, setRunError] = useState("");
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState(savedRun);
-  const [runHistory, setRunHistory] = useState(readRunHistory);
+
+  const [showPortfolioReady, setShowPortfolioReady] = useState(false);
+const [runHistory, setRunHistory] = useState(readRunHistory);
   const [activeRunId, setActiveRunId] = useState(null);
+  const [candidateProgress, setCandidateProgress] = useState({
+    current: 0,
+    total: 0,
+  });
 
   const [soundEnabled, setSoundEnabled] = useState(() => {
     return localStorage.getItem("burn1SoundEnabled") !== "false";
@@ -437,9 +444,21 @@ function App() {
   }
 
   function switchView(nextView) {
-    playTone(610);
+
+    if (nextView !== "optimizer") {
+      setShowPortfolioReady(false);
+    }
+
+playTone(610);
     setView(nextView);
-    if (nextView !== "optimizer") setPlayerSearch("");
+
+    if (nextView === "lineups") {
+      setLineupsUnread(false);
+    }
+
+    if (nextView !== "optimizer") {
+      setPlayerSearch("");
+    }
   }
 
   function toggleLock(playerId) {
@@ -699,10 +718,15 @@ function App() {
     }
 
     setRunning(true);
+    setShowPortfolioReady(false);
     setActiveRunId(null);
     setRunError("");
     setRunMessage("Ignition sequence started.");
     setRunStatus("queued");
+    setCandidateProgress({
+      current: 0,
+      total: Number(config.candidate_count || 0),
+    });
     sessionStorage.removeItem("burn1LastRun");
     playTone(180, 0.12);
 
@@ -731,10 +755,21 @@ function App() {
         setRunStatus(job.status || "running");
         setRunMessage(job.message || "");
 
+        setCandidateProgress({
+          current: Number(job.progress_current || 0),
+          total: Number(
+            job.progress_total ||
+            config.candidate_count ||
+            0
+          ),
+        });
+
         if (job.status === "complete") {
           verifyCompletedRun(job.result, config);
           const saved = saveSuccessfulRun(job.result, config);
           setResult(job.result);
+          setShowPortfolioReady(true);
+          setLineupsUnread(true);
           setActiveRunId(saved.id);
           setRunning(false);
           sessionStorage.setItem("burn1LastRun", JSON.stringify(job.result));
@@ -960,8 +995,8 @@ function App() {
 
   return (
     <div className="burn1-root">
-      <div className="master">
-        <img className="master-image" src="/BURN1_UI.png" alt="BURN1 DFS Optimizer" />
+      <div className={`master status-${runStatus}`}>
+        <img className="master-image" src="/BURN1_UI_clean.png" alt="BURN1 DFS Optimizer" />
 
         <div className={`connection-orb ${backendStatus.toLowerCase()}`} title={backendDetail} />
 
@@ -975,7 +1010,13 @@ function App() {
         ].map(([key, className]) => (
           <button
             key={key}
-            className={`${className} ${view === key ? "active" : ""}`}
+            className={`${className} ${
+              view === key ? "active" : ""
+            } ${
+              key === "lineups" && lineupsUnread
+                ? "has-new-lineups"
+                : ""
+            }`}
             aria-label={key}
             onClick={() => switchView(key)}
           />
@@ -983,8 +1024,27 @@ function App() {
         <button className="top-hit top-sport" onClick={() => { setView("settings"); notify("NFL V1 is the active sport engine."); }} aria-label="Sport" />
         <button className="top-hit top-slate" onClick={() => { setView("settings"); notify("Week 3 - Main is the active loaded slate."); }} aria-label="Slate" />
         <button className="top-hit top-gear" onClick={() => switchView("settings")} aria-label="Settings" />
+        {/* BURN1 OPTIMIZER ONLY CONTROLS START */}
+        {view === "optimizer" && (
+          <>
         <button className="left-field-hit left-sport-hit" onClick={() => { setView("settings"); notify("NFL V1 is the active sport engine."); }} aria-label="Left sport selector" />
         <button className="left-field-hit left-slate-hit" onClick={() => { setView("settings"); notify("Week 3 - Main is the active loaded slate."); }} aria-label="Left slate selector" />
+        <div
+          className="burn1-left-clean-underlay"
+          aria-hidden="true"
+        >
+          <span className="clean-mask clean-site-mask" />
+          <span className="clean-mask clean-lineup-mask" />
+          <span className="clean-mask clean-player-search-mask" />
+
+          <span className="clean-mask clean-strategy-value sv-1" />
+          <span className="clean-mask clean-strategy-value sv-2" />
+          <span className="clean-mask clean-strategy-value sv-3" />
+          <span className="clean-mask clean-strategy-value sv-4" />
+          <span className="clean-mask clean-strategy-value sv-5" />
+        </div>
+
+
 
         <button
           className={`site-button dk-button ${site === "dk" ? "selected" : ""}`}
@@ -1001,20 +1061,6 @@ function App() {
           FanDuel
         </button>
 
-        <input
-          className="lineup-slider"
-          type="range"
-          min="1"
-          max="50"
-          value={lineupCount}
-          disabled={running}
-          aria-label="Number of lineups"
-          onChange={(event) => {
-            const value = Number(event.target.value);
-            setLineupCount(value);
-            setCandidateCount((current) => Math.max(current, value));
-          }}
-        />
         <div className="lineup-value">{lineupCount}</div>
 
         <button
@@ -1037,48 +1083,7 @@ function App() {
         <div className="player-tab-count exclude-count">{excludedPlayerIds.length}</div>
         <div className="player-tab-count exposure-count">{controlledExposureCount}</div>
 
-        <input
-          className="player-search-inline"
-          value={playerSearch}
-          disabled={playerPoolLoading || running}
-          placeholder="Search player by name or team..."
-          onChange={(event) => setPlayerSearch(event.target.value)}
-          onFocus={() => {
-            if (view !== "optimizer") setView("optimizer");
-          }}
-        />
 
-        {view === "optimizer" && playerSearch.trim() && (
-          <div className="quick-player-popover">
-            {playerPoolLoading ? (
-              <div className="quick-empty">Loading player pool...</div>
-            ) : quickSearchPlayers.length ? (
-              quickSearchPlayers.map((player) => {
-                const id = String(player.player_id);
-                const active = playerControlTab === "locks"
-                  ? lockedPlayerIds.includes(id)
-                  : playerControlTab === "excludes"
-                    ? excludedPlayerIds.includes(id)
-                    : minPlayerExposures[id] !== undefined || maxPlayerExposures[id] !== undefined;
-
-                return (
-                  <button key={id} className="quick-player-row" onClick={() => useQuickPlayer(player)}>
-                    <span><strong>{player.name}</strong><small>{player.position}  |  {player.team} vs {player.opponent}</small></span>
-                    <span>${Number(player.salary).toLocaleString()}</span>
-                    <span>{Number(player.projection).toFixed(2)}</span>
-                    <b className={active ? "active" : ""}>
-                      {playerControlTab === "locks" ? (active ? "LOCKED" : "LOCK") :
-                        playerControlTab === "excludes" ? (active ? "OUT" : "EXCLUDE") : "EDIT"}
-                    </b>
-                  </button>
-                );
-              })
-            ) : (
-              <div className="quick-empty">No matching players.</div>
-            )}
-            <button className="quick-open-pool" onClick={() => setView("playerPool")}>OPEN FULL PLAYER POOL â†’</button>
-          </div>
-        )}
 
         {VISIBLE_STRATEGIES.map(([strategy], index) => (
           <button
@@ -1089,30 +1094,345 @@ function App() {
           />
         ))}
 
-        {VISIBLE_STRATEGIES.map(([strategy], index) => (
-          <div key={`${strategy}-value`} className={`strategy-live-value strategy-value-${index + 1}`}>
-            {minStrategyExposures[strategy] ?? 0}% - {maxStrategyExposures[strategy] ?? 100}%
-          </div>
-        ))}
 
         <button
           className={`ignite-hit ${running ? "running" : ""}`}
           disabled={running || backendStatus !== "READY"}
           onClick={ignite}
           aria-label="Ignite BURN1"
+          style={{
+            "--ignite-progress":
+              runStatus === "stage2_optimizing"
+                ? 1
+                : runStatus === "stage1_generating"
+                  ? Math.min(
+                      1,
+                      Number(candidateProgress.current || 0) /
+                        Math.max(
+                          1,
+                          Number(
+                            candidateProgress.total ||
+                            candidateCount ||
+                            1
+                          )
+                        )
+                    )
+                  : runStatus === "validating"
+                    ? 0.08
+                    : runStatus === "queued"
+                      ? 0.04
+                      : 0,
+          }}
         >
-          <span className="ignite-label">IGNITE</span>
+          <span className="ignite-label">
+            {running
+              ? runStatus === "stage2_optimizing"
+                ? "SELECTING PORTFOLIO"
+                : runStatus === "stage1_generating"
+                  ? `GENERATING ${candidateProgress.current || 0}/${candidateProgress.total || candidateCount}`
+                  : runStatus === "validating"
+                    ? "VALIDATING"
+                    : "STARTING"
+              : "IGNITE"}
+          </span>
         </button>
 
+        <button
+          className="burn1-home-hit"
+          type="button"
+          onClick={() => switchView("optimizer")}
+          aria-label="BURN1 home"
+          title="Return to BURN1 Optimizer"
+        />
+
         <button className="view-all-hit" onClick={() => setView("exposures")} aria-label="View all exposures" />
+          </>
+        )}
+        {/* BURN1 OPTIMIZER ONLY CONTROLS END */}
 
 
         {view === "optimizer" && (
           <>
+            {(running || showPortfolioReady) && (
+              <div
+                className={`burn1-jumbotron status-${runStatus}`}
+                aria-live="polite"
+              >
+              <section className="jumbo-screen jumbo-left">
+                <div className="jumbo-screen-glass" />
+
+                <div className="jumbo-content">
+                  {runStatus === "stage1_generating" ? (
+                    <>
+                      <small>GENERATING</small>
+                      <span>CANDIDATES</span>
+
+                      <strong>
+                        {candidateProgress.current || 0}
+                        <b>/</b>
+                        {candidateProgress.total || candidateCount}
+                      </strong>
+
+                      <div className="jumbo-progress-track">
+                        <i
+                          style={{
+                            width: `${
+                              Math.min(
+                                1,
+                                Number(candidateProgress.current || 0) /
+                                  Math.max(
+                                    1,
+                                    Number(
+                                      candidateProgress.total ||
+                                      candidateCount ||
+                                      1
+                                    )
+                                  )
+                              ) * 100
+                            }%`,
+                          }}
+                        />
+                      </div>
+                    </>
+                  ) : runStatus === "stage2_optimizing" ? (
+                    <>
+                      <small>CANDIDATES</small>
+                      <span>COMPLETE</span>
+
+                      <strong>
+                        {candidateProgress.total || candidateCount}
+                        <b>/</b>
+                        {candidateProgress.total || candidateCount}
+                      </strong>
+
+                      <div className="jumbo-progress-track complete">
+                        <i style={{ width: "100%" }} />
+                      </div>
+                    </>
+                  ) : runStatus === "complete" && showPortfolioReady && result ? (
+                    <>
+                      <small>PORTFOLIO</small>
+                      <span>READY</span>
+
+                      <strong>
+                        {result.generated_lineups}
+                        <b className="jumbo-unit"> LINEUPS</b>
+                      </strong>
+
+                      <div className="jumbo-progress-track complete">
+                        <i style={{ width: "100%" }} />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <small>BURN1</small>
+                      <span>READY</span>
+
+                      <strong className="jumbo-ready">
+                        IGNITE
+                      </strong>
+
+                      <div className="jumbo-progress-track">
+                        <i style={{ width: "0%" }} />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </section>
+
+
+              <section className="jumbo-screen jumbo-right">
+                <div className="jumbo-screen-glass" />
+
+                <div className="jumbo-status-content">
+                  <small>
+                    {runStatus === "complete"
+                      ? "STAGE 3 OF 3"
+                      : runStatus === "stage2_optimizing"
+                        ? "STAGE 2 OF 3"
+                        : running
+                          ? "STAGE 1 OF 3"
+                          : "SYSTEM READY"}
+                  </small>
+
+                  {runStatus === "stage1_generating" ? (
+                    <>
+                      <div className="jumbo-status-row done">
+                        <i /> PLAYER POOL READY
+                      </div>
+
+                      <div className="jumbo-status-row active">
+                        <i /> BUILDING CANDIDATES
+                      </div>
+
+                      <div className="jumbo-status-row">
+                        <i /> {candidateProgress.current || 0}/
+                        {candidateProgress.total || candidateCount}
+                      </div>
+
+                      <div className="jumbo-status-row">
+                        <i /> TARGET {lineupCount} LINEUPS
+                      </div>
+                    </>
+                  ) : runStatus === "stage2_optimizing" ? (
+                    <>
+                      <div className="jumbo-status-row done">
+                        <i /> CANDIDATES COMPLETE
+                      </div>
+
+                      <div className="jumbo-status-row active">
+                        <i /> SELECTING PORTFOLIO
+                      </div>
+
+                      <div className="jumbo-status-row">
+                        <i /> TARGET {lineupCount} LINEUPS
+                      </div>
+
+                      <div className="jumbo-status-row">
+                        <i /> CP-SAT OPTIMIZER
+                      </div>
+                    </>
+                  ) : runStatus === "complete" && showPortfolioReady && result ? (
+                    <>
+                      <div className="jumbo-complete-title">
+                        PORTFOLIO COMPLETE
+                      </div>
+
+                      <div className="jumbo-result-grid">
+                        <div>
+                          <span>LINEUPS</span>
+                          <strong>{result.generated_lineups}</strong>
+                        </div>
+
+                        <div>
+                          <span>TOTAL</span>
+                          <strong>{totalProjection}</strong>
+                        </div>
+
+                        <div>
+                          <span>AVG</span>
+                          <strong>{averageProjection}</strong>
+                        </div>
+
+                        <div>
+                          <span>STATUS</span>
+                          <strong>{result.solver_status}</strong>
+                        </div>
+                      </div>
+
+                      <div className="jumbo-lineups-hint">
+                        LINEUPS TAB READY
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="jumbo-status-row done">
+                        <i /> API READY
+                      </div>
+
+                      <div className="jumbo-status-row done">
+                        <i /> {siteCode(site)} PLAYER POOL
+                      </div>
+
+                      <div className="jumbo-status-row">
+                        <i /> {candidateCount} CANDIDATES
+                      </div>
+
+                      <div className="jumbo-status-row">
+                        <i /> {lineupCount} FINAL LINEUPS
+                      </div>
+                    </>
+                  )}
+                </div>
+              </section>
+
+
+              <div
+                className={`jumbo-stage-lights status-${runStatus}`}
+                aria-hidden="true"
+              >
+                <span className="jumbo-stage-light jumbo-stage-1" />
+                <span className="jumbo-stage-light jumbo-stage-2" />
+                <span className="jumbo-stage-light jumbo-stage-3" />
+              </div>
+            </div>
+            )}
+
+
+
+            <div
+              className={`burn1-live-stage-label status-${runStatus}`}
+              aria-live="polite"
+            >
+              {runStatus === "stage1_generating"
+                ? `GENERATING CANDIDATES ${candidateProgress.current || 0}/${candidateProgress.total || 0}`
+                : runStatus === "stage2_optimizing"
+                  ? "SELECTING PORTFOLIO"
+                  : runStatus === "complete"
+                    ? "PORTFOLIO READY"
+                    : runStatus === "validating"
+                      ? "VALIDATING RUN"
+                      : "BURN1 OPTIMIZATION ENGINE"}
+            </div>
+
+            <div
+              className={`burn1-stage-overlay status-${runStatus}`}
+              aria-hidden="true"
+            >
+              <span className="burn1-stage-node stage-node-1">
+                <i>
+                  {runStatus === "stage2_optimizing" ||
+                  runStatus === "complete"
+                    ? "✓"
+                    : ""}
+                </i>
+              </span>
+
+              <span className="burn1-stage-node stage-node-2">
+                <i>
+                  {runStatus === "complete"
+                    ? "✓"
+                    : ""}
+                </i>
+              </span>
+
+              <span className="burn1-stage-node stage-node-3">
+                <i>
+                  {runStatus === "complete"
+                    ? "✓"
+                    : ""}
+                </i>
+              </span>
+            </div>
+
             <div
               className={`burn1-progress-engine status-${runStatus} ${
                 running ? "running" : ""
               }`}
+              style={{
+                "--burn1-progress-scale":
+                  runStatus === "complete"
+                    ? 1
+                    : runStatus === "stage2_optimizing"
+                      ? 0.90
+                      : runStatus === "stage1_generating"
+                        ? 0.12 + (
+                            0.68 *
+                            Math.min(
+                              1,
+                              Number(candidateProgress.current || 0) /
+                              Math.max(
+                                1,
+                                Number(candidateProgress.total || 1)
+                              )
+                            )
+                          )
+                        : runStatus === "validating"
+                          ? 0.12
+                          : runStatus === "queued"
+                            ? 0.06
+                            : 0,
+              }}
               aria-hidden="true"
             >
               <div className="burn1-progress-track">
@@ -1121,6 +1441,19 @@ function App() {
                 </div>
               </div>
             </div>
+
+            {running && (
+              <div
+                className={`burn1-fire-stage status-${runStatus}`}
+                aria-hidden="true"
+              >
+                <span className="burn1-flame flame-1" />
+                <span className="burn1-flame flame-2" />
+                <span className="burn1-flame flame-3" />
+                <span className="burn1-flame flame-4" />
+                <span className="burn1-heat-wave" />
+              </div>
+            )}
 
             {running && (
               <svg
@@ -1281,14 +1614,88 @@ function App() {
           </>
         )}
 
-        {(running || result) && (
-          <section className="live-telemetry">
-            <div><span>SITE</span><strong className="accent">{siteCode(site)}</strong></div>
-            <div><span>CANDIDATES</span><strong>{result ? `${result.generated_candidates}/${result.requested_candidates}` : `0/${candidateCount}`}</strong></div>
-            <div><span>FINAL LINEUPS</span><strong>{result ? `${result.generated_lineups}/${result.requested_lineups}` : `0/${lineupCount}`}</strong></div>
-            <div><span>PORTFOLIO</span><strong>{running ? "IN PROGRESS..." : "COMPLETE"}</strong></div>
-            <div><span>SOLVER</span><strong>CP-SAT</strong></div>
-            <div><span>STATUS</span><strong className="accent">{result?.solver_status || String(runStatus).toUpperCase()}</strong></div>
+        {view === "optimizer" && running && (
+          <section className={`burn1-run-hud status-${runStatus}`}>
+            <div className="hud-kicker">
+              {runStatus === "stage2_optimizing"
+                ? "SELECTING PORTFOLIO"
+                : runStatus === "validating"
+                  ? "VALIDATING"
+                  : "GENERATING CANDIDATES"}
+            </div>
+
+            <div className="hud-main">
+              <strong>
+                {runStatus === "stage1_generating"
+                  ? `${candidateProgress.current || 0}/${candidateProgress.total || candidateCount}`
+                  : runStatus === "stage2_optimizing"
+                    ? `${candidateProgress.total || candidateCount} CANDIDATES`
+                    : siteCode(site)}
+              </strong>
+
+              <span>
+                {siteCode(site)} · WEEK 3 MAIN
+              </span>
+            </div>
+
+            <div className="hud-grid">
+              <div>
+                <span>FINAL</span>
+                <strong>{lineupCount}</strong>
+              </div>
+
+              <div>
+                <span>ENGINE</span>
+                <strong>CP-SAT</strong>
+              </div>
+
+              <div>
+                <span>STATUS</span>
+                <strong>
+                  {runStatus === "stage2_optimizing"
+                    ? "SELECTING"
+                    : runStatus === "validating"
+                      ? "VALIDATING"
+                      : "GENERATING"}
+                </strong>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {view === "optimizer" && showPortfolioReady && result && !running && (
+          <section className="burn1-ready-hud">
+            <div className="ready-copy">
+              <small>PORTFOLIO READY</small>
+
+              <strong>
+                {result.generated_lineups} LINEUPS
+              </strong>
+
+              <span>
+                {siteCode(site)} · {result.solver_status}
+              </span>
+            </div>
+
+            <div className="ready-stats">
+              <div>
+                <span>TOTAL PROJ</span>
+                <strong>{totalProjection}</strong>
+              </div>
+
+              <div>
+                <span>AVG PROJ</span>
+                <strong>{averageProjection}</strong>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => switchView("lineups")}
+            >
+              VIEW LINEUPS
+              <b>→</b>
+            </button>
           </section>
         )}
 
@@ -1370,7 +1777,7 @@ function App() {
                         <header><strong>LINEUP {lineup.lineup_number}</strong><span>${Number(lineup.total_salary).toLocaleString()}  |  {Number(lineup.total_projection).toFixed(2)}</span></header>
                         {lineup.players.map((player) => (
                           <div className="lineup-player" key={`${lineup.lineup_number}-${player.player_id}-${player.roster_slot}`}>
-                            <strong>{player.roster_slot}</strong><span>{player.name}</span><span>{player.team} vs {player.opponent}</span><span>${Number(player.salary).toLocaleString()}</span><b>{Number(player.projection).toFixed(2)}</b>
+                            <strong>{player.roster_slot}</strong><span>{player.name}</span><span>{player.team}{player.opponent ? ` vs ${player.opponent}` : ""}</span><span>${Number(player.salary).toLocaleString()}</span><b>{Number(player.projection).toFixed(2)}</b>
                           </div>
                         ))}
                       </article>
@@ -1446,7 +1853,7 @@ function App() {
                     const excluded = excludedPlayerIds.includes(id);
                     return (
                       <div className="player-pool-row" key={id}>
-                        <strong>{player.name}</strong><span>{player.position}</span><span>{player.team} vs {player.opponent}</span><span>${Number(player.salary).toLocaleString()}</span><b>{Number(player.projection).toFixed(2)}</b>
+                        <strong>{player.name}</strong><span>{player.position}</span><span>{player.team}{player.opponent ? ` vs ${player.opponent}` : ""}</span><span>${Number(player.salary).toLocaleString()}</span><b>{Number(player.projection).toFixed(2)}</b>
                         <button className={locked ? "toggle active" : "toggle"} onClick={() => toggleLock(id)}>{locked ? "LOCKED" : "LOCK"}</button>
                         <button className={excluded ? "toggle danger active" : "toggle danger"} onClick={() => toggleExclude(id)}>{excluded ? "OUT" : "EXCLUDE"}</button>
                         <input type="number" min="0" max="100" value={minPlayerExposures[id] ?? 0} onChange={(event) => updatePlayerExposure(id, "min", event.target.value)} />

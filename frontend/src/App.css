@@ -1,4 +1,4 @@
-* { box-sizing: border-box; }
+﻿* { box-sizing: border-box; }
 html, body, #root { margin: 0; min-height: 100%; background: #020304; }
 body { font-family: "Segoe UI", Arial, sans-serif; }
 button, input, select { font: inherit; }
@@ -1217,3 +1217,5818 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 }
 
 /* BURN1 MOTION + PROGRESS FIX END */
+
+
+/* BURN1 REAL PROGRESS OVERRIDE */
+
+.burn1-progress-fill {
+  width: 100% !important;
+  animation: none !important;
+
+  transform:
+    scaleX(
+      var(
+        --burn1-progress-scale,
+        0
+      )
+    ) !important;
+
+  transform-origin:
+    left center !important;
+
+  transition:
+    transform 280ms
+    cubic-bezier(.2,.8,.2,1)
+    !important;
+}
+
+.burn1-progress-engine.running
+.burn1-progress-fill::after {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -16%;
+
+  width: 14%;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(255,247,230,.92),
+      transparent
+    );
+
+  animation:
+    burn1-real-scan
+    1.1s linear infinite !important;
+}
+
+@keyframes burn1-real-scan {
+  from {
+    left: -16%;
+  }
+
+  to {
+    left: 104%;
+  }
+}
+
+.run-message {
+  display: none !important;
+}
+
+/* BURN1 REAL PROGRESS OVERRIDE END */
+
+
+/* BURN1 CLEAN FIELD V1.3 START */
+
+
+/* =========================================================
+   LIVE STATUS LABEL
+   ========================================================= */
+
+.burn1-live-stage-label {
+  position: fixed;
+
+  left: 48.3%;
+  top: 17.2%;
+
+  transform: translateX(-50%);
+
+  z-index: 92;
+
+  color: #8d969d;
+
+  font-family:
+    Consolas,
+    "Courier New",
+    monospace;
+
+  font-size:
+    clamp(7px, .63vw, 12px);
+
+  font-weight: 800;
+
+  letter-spacing:
+    .17em;
+
+  pointer-events: none;
+
+  opacity: 0;
+
+  transition:
+    opacity 220ms ease,
+    color 220ms ease,
+    text-shadow 220ms ease;
+}
+
+.burn1-live-stage-label.status-validating,
+.burn1-live-stage-label.status-stage1_generating,
+.burn1-live-stage-label.status-stage2_optimizing,
+.burn1-live-stage-label.status-complete {
+  opacity: 1;
+}
+
+.burn1-live-stage-label.status-stage1_generating {
+  color: #9beaff;
+
+  text-shadow:
+    0 0 10px
+    rgba(55, 207, 255, .55);
+}
+
+.burn1-live-stage-label.status-stage2_optimizing {
+  color: #ffb35e;
+
+  text-shadow:
+    0 0 12px
+    rgba(255, 111, 17, .62);
+}
+
+.burn1-live-stage-label.status-complete {
+  color: #dfe7eb;
+}
+
+
+/* =========================================================
+   CLEAN ROUTE FIELD
+   ========================================================= */
+
+.burn1-route-field {
+  left: 28.8% !important;
+  top: 35.3% !important;
+
+  width: 44.0% !important;
+  height: 20.0% !important;
+
+  overflow: hidden !important;
+
+  opacity: .96;
+
+  clip-path:
+    inset(
+      2%
+      2%
+      2%
+      2%
+      round 10px
+    );
+}
+
+
+/* Reduce route density visually */
+
+.burn1-route {
+  stroke-width:
+    2.15px !important;
+
+  stroke-dasharray:
+    13 19 !important;
+
+  opacity:
+    .80;
+
+  filter:
+    drop-shadow(
+      0 0 3px
+      currentColor
+    );
+
+  animation-duration:
+    1.65s !important;
+}
+
+
+/* Secondary paths stay quieter */
+
+.burn1-route.secondary {
+  opacity:
+    .48 !important;
+}
+
+.burn1-route.tertiary {
+  opacity:
+    .26 !important;
+}
+
+
+/* Cleaner trackers */
+
+.burn1-tracker {
+  transform-box: fill-box;
+  transform-origin: center;
+
+  opacity:
+    .92;
+
+  filter:
+    drop-shadow(
+      0 0 4px
+      currentColor
+    );
+}
+
+.burn1-tracker.secondary {
+  opacity:
+    .58;
+}
+
+.burn1-tracker.tertiary {
+  opacity:
+    .34;
+}
+
+
+/* =========================================================
+   STAGE 1 â€” CYAN DOMINANCE
+   ========================================================= */
+
+.burn1-route-field.status-stage1_generating
+.burn1-blue-routes {
+  opacity:
+    1 !important;
+
+  filter:
+    drop-shadow(
+      0 0 5px
+      rgba(45, 213, 255, .45)
+    );
+}
+
+.burn1-route-field.status-stage1_generating
+.burn1-orange-routes {
+  opacity:
+    .12 !important;
+
+  filter:
+    none !important;
+}
+
+
+/* =========================================================
+   STAGE 2 â€” ORANGE DOMINANCE
+   ========================================================= */
+
+.burn1-route-field.status-stage2_optimizing
+.burn1-blue-routes {
+  opacity:
+    .16 !important;
+
+  filter:
+    none !important;
+}
+
+.burn1-route-field.status-stage2_optimizing
+.burn1-orange-routes {
+  opacity:
+    1 !important;
+
+  filter:
+    drop-shadow(
+      0 0 6px
+      rgba(255, 116, 20, .50)
+    );
+}
+
+
+/* =========================================================
+   RIGHT-SIDE FIRE BURSTS
+   ========================================================= */
+
+.burn1-fire-stage {
+  position: fixed;
+
+  left: 67.0%;
+  top: 35.2%;
+
+  width: 6.4%;
+  height: 19.7%;
+
+  z-index: 74;
+
+  overflow: hidden;
+
+  pointer-events: none;
+
+  opacity: 0;
+
+  transition:
+    opacity 180ms ease;
+}
+
+
+/* Fire only belongs to selection */
+
+.burn1-fire-stage.status-stage2_optimizing {
+  opacity:
+    1;
+}
+
+
+.burn1-flame {
+  position: absolute;
+
+  bottom: -5%;
+
+  width: 16%;
+  height: 52%;
+
+  border-radius:
+    55% 55% 25% 25%;
+
+  transform-origin:
+    center bottom;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 235, 176, .96) 0%,
+      rgba(255, 160, 45, .96) 26%,
+      rgba(255, 82, 8, .90) 60%,
+      rgba(128, 26, 0, 0) 100%
+    );
+
+  filter:
+    blur(.45px)
+    drop-shadow(
+      0 0 8px
+      rgba(255, 96, 12, .74)
+    );
+
+  opacity: 0;
+
+  animation:
+    burn1-fire-burst
+    1.55s
+    ease-in-out
+    infinite;
+}
+
+
+.flame-1 {
+  left: 8%;
+
+  animation-delay:
+    0s;
+}
+
+.flame-2 {
+  left: 31%;
+
+  height: 65%;
+
+  animation-delay:
+    .28s;
+}
+
+.flame-3 {
+  left: 55%;
+
+  height: 44%;
+
+  animation-delay:
+    .58s;
+}
+
+.flame-4 {
+  left: 75%;
+
+  height: 58%;
+
+  animation-delay:
+    .86s;
+}
+
+
+@keyframes burn1-fire-burst {
+
+  0%,
+  65%,
+  100% {
+    opacity: 0;
+
+    transform:
+      translateY(18%)
+      scaleX(.55)
+      scaleY(.35);
+  }
+
+  72% {
+    opacity: .85;
+
+    transform:
+      translateY(2%)
+      scaleX(.88)
+      scaleY(.80);
+  }
+
+  80% {
+    opacity: 1;
+
+    transform:
+      translateY(-5%)
+      scaleX(1)
+      scaleY(1.15);
+  }
+
+  92% {
+    opacity: .25;
+
+    transform:
+      translateY(-20%)
+      scaleX(.62)
+      scaleY(.70);
+  }
+}
+
+
+/* subtle heat shimmer */
+
+.burn1-heat-wave {
+  position: absolute;
+
+  right: 2%;
+  bottom: 0;
+
+  width: 92%;
+  height: 100%;
+
+  background:
+    radial-gradient(
+      ellipse at center bottom,
+      rgba(255, 122, 20, .16),
+      transparent 67%
+    );
+
+  filter:
+    blur(5px);
+
+  opacity:
+    .62;
+
+  animation:
+    burn1-heat-pulse
+    1.2s
+    ease-in-out
+    infinite alternate;
+}
+
+
+@keyframes burn1-heat-pulse {
+
+  from {
+    transform:
+      scaleX(.94)
+      translateY(2%);
+  }
+
+  to {
+    transform:
+      scaleX(1.04)
+      translateY(-2%);
+  }
+}
+
+
+/* =========================================================
+   COMPLETE
+   ========================================================= */
+
+.burn1-route-field.status-complete,
+.burn1-fire-stage.status-complete {
+  opacity:
+    0 !important;
+
+  transition:
+    opacity 320ms ease;
+}
+
+
+/* =========================================================
+   LESS MOTION FOR ACCESSIBILITY
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .burn1-flame,
+  .burn1-heat-wave,
+  .burn1-route {
+    animation:
+      none !important;
+  }
+
+  .burn1-fire-stage.status-stage2_optimizing {
+    opacity:
+      .48;
+  }
+}
+
+/* BURN1 CLEAN FIELD V1.3 END */
+
+
+/* BURN1 V1.3 VISUAL TUNE â€” ROUTES + PIPELINE */
+
+/* Move progress rail below the 1 / 2 / 3 stage controls */
+.burn1-progress-engine {
+  left: 43.3% !important;
+  top: 29.25% !important;
+  width: 32.2% !important;
+  height: 11px !important;
+  z-index: 82 !important;
+}
+
+.burn1-progress-track {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: auto !important;
+  height: 6px !important;
+  border: 1px solid rgba(87, 99, 110, .62) !important;
+  background: rgba(8, 13, 18, .96) !important;
+  box-shadow:
+    inset 0 1px 4px rgba(0,0,0,.92),
+    0 0 5px rgba(255,111,14,.10) !important;
+}
+
+/* Keep every route energized */
+.burn1-route {
+  opacity: .96 !important;
+  stroke-width: 2.45px !important;
+  stroke-dasharray: 15 17 !important;
+  animation-duration: 1.48s !important;
+  transition:
+    opacity 220ms ease,
+    filter 220ms ease,
+    stroke-width 220ms ease !important;
+}
+
+.burn1-route.secondary {
+  opacity: .90 !important;
+}
+
+.burn1-route.tertiary {
+  opacity: .78 !important;
+}
+
+/* Blue network */
+.burn1-blue-routes {
+  opacity: .72 !important;
+  filter:
+    drop-shadow(0 0 4px rgba(31, 208, 255, .65))
+    drop-shadow(0 0 9px rgba(20, 179, 255, .25)) !important;
+}
+
+.burn1-route-field.status-stage1_generating
+.burn1-blue-routes {
+  opacity: 1 !important;
+  filter:
+    drop-shadow(0 0 5px rgba(70, 226, 255, .92))
+    drop-shadow(0 0 13px rgba(24, 188, 255, .52)) !important;
+}
+
+.burn1-route-field.status-stage2_optimizing
+.burn1-blue-routes {
+  opacity: .52 !important;
+  filter:
+    drop-shadow(0 0 4px rgba(46, 210, 255, .55)) !important;
+}
+
+/* Orange network â€” brighter and more obvious */
+.burn1-orange-routes {
+  opacity: .64 !important;
+  filter:
+    drop-shadow(0 0 5px rgba(255, 112, 15, .72))
+    drop-shadow(0 0 10px rgba(255, 76, 0, .32)) !important;
+}
+
+.burn1-route-field.status-stage1_generating
+.burn1-orange-routes {
+  opacity: .55 !important;
+  filter:
+    drop-shadow(0 0 5px rgba(255, 119, 22, .68)) !important;
+}
+
+.burn1-route-field.status-stage2_optimizing
+.burn1-orange-routes {
+  opacity: 1 !important;
+  filter:
+    drop-shadow(0 0 6px rgba(255, 165, 64, 1))
+    drop-shadow(0 0 14px rgba(255, 94, 5, .76))
+    drop-shadow(0 0 22px rgba(255, 52, 0, .31)) !important;
+}
+
+/* Trackers */
+.burn1-tracker {
+  opacity: 1 !important;
+  filter:
+    drop-shadow(0 0 4px currentColor)
+    drop-shadow(0 0 8px currentColor) !important;
+}
+
+.burn1-tracker.secondary {
+  opacity: .92 !important;
+}
+
+.burn1-tracker.tertiary {
+  opacity: .82 !important;
+}
+
+/* Stronger Stage-2 fire */
+.burn1-fire-stage.status-stage2_optimizing {
+  opacity: 1 !important;
+  filter:
+    drop-shadow(0 0 10px rgba(255, 87, 4, .38));
+}
+
+.burn1-flame {
+  filter:
+    blur(.35px)
+    drop-shadow(0 0 8px rgba(255, 117, 12, .90))
+    drop-shadow(0 0 15px rgba(255, 63, 0, .44)) !important;
+}
+
+/* Calm finish */
+.burn1-route-field.status-complete,
+.burn1-fire-stage.status-complete {
+  opacity: 0 !important;
+  transition: opacity 360ms ease !important;
+}
+
+/* BURN1 V1.3 VISUAL TUNE END */
+
+
+/* BURN1 LOGO HOME BUTTON */
+
+.burn1-home-hit {
+  position: fixed;
+
+  left: 2.2%;
+  top: 1.4%;
+
+  width: 23%;
+  height: 10.7%;
+
+  z-index: 140;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+
+  cursor: pointer;
+}
+
+
+/* Very subtle feedback so it still feels clickable
+   without covering the baked logo artwork. */
+
+@media (hover: hover) and (pointer: fine) {
+
+  .burn1-home-hit:hover {
+    background:
+      radial-gradient(
+        ellipse at center,
+        rgba(255, 126, 27, .055),
+        transparent 70%
+      );
+
+    box-shadow:
+      inset 0 0 24px
+      rgba(255, 106, 14, .035);
+  }
+}
+
+
+.burn1-home-hit:focus-visible {
+  outline:
+    1px solid
+    rgba(255, 145, 58, .85);
+
+  outline-offset:
+    -3px;
+
+  background:
+    rgba(255, 112, 18, .035);
+}
+
+/* BURN1 LOGO HOME BUTTON END */
+
+
+/* =========================================================
+   BURN1 V1.3 NAV + STAGE SYSTEM START
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   REMOVE REDUNDANT LOWER PROGRESS BAR
+   The 1 â†’ 2 â†’ 3 pipeline is now authoritative.
+   --------------------------------------------------------- */
+
+.burn1-progress-engine {
+  display: none !important;
+}
+
+
+/* ---------------------------------------------------------
+   LIVE 1 â†’ 2 â†’ 3 NODE OVERLAY
+   --------------------------------------------------------- */
+
+.burn1-stage-overlay {
+  position: fixed;
+
+  left: 0;
+  top: 0;
+
+  width: 100%;
+  height: 100%;
+
+  z-index: 88;
+
+  pointer-events: none;
+}
+
+
+.burn1-stage-node {
+  position: fixed;
+
+  width: 38px;
+  height: 38px;
+
+  transform:
+    translate(-50%, -50%);
+
+  border-radius: 50%;
+
+  opacity: 0;
+
+  transition:
+    opacity 200ms ease,
+    box-shadow 220ms ease,
+    background 220ms ease,
+    border-color 220ms ease;
+}
+
+
+.stage-node-1 {
+  left: 50.25%;
+  top: 23.95%;
+}
+
+.stage-node-2 {
+  left: 64.20%;
+  top: 23.95%;
+}
+
+.stage-node-3 {
+  left: 78.10%;
+  top: 23.95%;
+}
+
+
+.burn1-stage-node i {
+  position: absolute;
+
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  font-style: normal;
+
+  color: #fff;
+
+  font-family:
+    Consolas,
+    "Courier New",
+    monospace;
+
+  font-size:
+    18px;
+
+  font-weight:
+    900;
+
+  text-shadow:
+    0 0 6px
+    rgba(255,255,255,.8);
+}
+
+
+/* ---------------------------------------------------------
+   STAGE 1 â€” GENERATING
+   --------------------------------------------------------- */
+
+.burn1-stage-overlay.status-validating
+.stage-node-1,
+
+.burn1-stage-overlay.status-stage1_generating
+.stage-node-1 {
+  opacity: 1;
+
+  border:
+    2px solid
+    rgba(87, 220, 255, .95);
+
+  background:
+    rgba(17, 79, 101, .20);
+
+  box-shadow:
+    0 0 8px
+    rgba(68, 217, 255, .95),
+
+    0 0 19px
+    rgba(35, 192, 255, .50),
+
+    inset 0 0 10px
+    rgba(94, 229, 255, .25);
+
+  animation:
+    burn1-stage-blue-pulse
+    1.25s ease-in-out infinite;
+}
+
+
+/* ---------------------------------------------------------
+   STAGE 2 â€” SELECTING
+   --------------------------------------------------------- */
+
+.burn1-stage-overlay.status-stage2_optimizing
+.stage-node-1 {
+  opacity: .88;
+
+  border:
+    2px solid
+    rgba(255, 141, 43, .86);
+
+  background:
+    rgba(91, 41, 8, .16);
+
+  box-shadow:
+    0 0 8px
+    rgba(255, 124, 26, .65);
+}
+
+
+.burn1-stage-overlay.status-stage2_optimizing
+.stage-node-2 {
+  opacity: 1;
+
+  border:
+    2px solid
+    rgba(255, 157, 55, 1);
+
+  background:
+    rgba(130, 54, 5, .22);
+
+  box-shadow:
+    0 0 9px
+    rgba(255, 149, 40, 1),
+
+    0 0 22px
+    rgba(255, 91, 5, .64),
+
+    inset 0 0 10px
+    rgba(255, 166, 67, .26);
+
+  animation:
+    burn1-stage-orange-pulse
+    1.05s ease-in-out infinite;
+}
+
+
+/* ---------------------------------------------------------
+   COMPLETE â€” ALL 3 NODES RESOLVE,
+   WITH #3 THE STRONGEST SIGNAL
+   --------------------------------------------------------- */
+
+.burn1-stage-overlay.status-complete
+.stage-node-1,
+
+.burn1-stage-overlay.status-complete
+.stage-node-2 {
+  opacity: .92;
+
+  border:
+    2px solid
+    rgba(255, 151, 48, .90);
+
+  background:
+    rgba(103, 45, 7, .20);
+
+  box-shadow:
+    0 0 9px
+    rgba(255, 121, 25, .60);
+}
+
+
+.burn1-stage-overlay.status-complete
+.stage-node-3 {
+  opacity: 1;
+
+  border:
+    2px solid
+    rgba(255, 219, 154, 1);
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 162, 55, .40),
+      rgba(104, 41, 4, .14)
+    );
+
+  box-shadow:
+    0 0 10px
+    rgba(255, 224, 176, .92),
+
+    0 0 23px
+    rgba(255, 142, 35, .90),
+
+    0 0 37px
+    rgba(255, 83, 5, .42);
+
+  animation:
+    burn1-stage-complete
+    .72s ease-out
+    2;
+}
+
+
+@keyframes burn1-stage-blue-pulse {
+
+  0%,
+  100% {
+    transform:
+      translate(-50%, -50%)
+      scale(.94);
+  }
+
+  50% {
+    transform:
+      translate(-50%, -50%)
+      scale(1.07);
+  }
+}
+
+
+@keyframes burn1-stage-orange-pulse {
+
+  0%,
+  100% {
+    transform:
+      translate(-50%, -50%)
+      scale(.96);
+  }
+
+  50% {
+    transform:
+      translate(-50%, -50%)
+      scale(1.09);
+  }
+}
+
+
+@keyframes burn1-stage-complete {
+
+  0% {
+    transform:
+      translate(-50%, -50%)
+      scale(.80);
+
+    filter:
+      brightness(.90);
+  }
+
+  55% {
+    transform:
+      translate(-50%, -50%)
+      scale(1.18);
+
+    filter:
+      brightness(1.35);
+  }
+
+  100% {
+    transform:
+      translate(-50%, -50%)
+      scale(1);
+
+    filter:
+      brightness(1);
+  }
+}
+
+
+/* ---------------------------------------------------------
+   TOP NAVIGATION â€” HOVER + ACTIVE
+   --------------------------------------------------------- */
+
+.nav-hit {
+  transition:
+    background 170ms ease,
+    box-shadow 170ms ease,
+    border-color 170ms ease,
+    filter 170ms ease !important;
+
+  border-bottom:
+    2px solid
+    transparent !important;
+
+  cursor:
+    pointer !important;
+}
+
+
+/* Slight mask over inactive baked labels.
+   This is especially useful for the permanently orange
+   OPTIMIZER label in the source artwork. */
+
+.nav-hit:not(.active) {
+  background:
+    rgba(4, 7, 9, .13) !important;
+}
+
+
+/* Every tab behaves like OPTIMIZER on hover */
+
+.nav-hit:hover {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 123, 18, .03),
+      rgba(255, 107, 6, .12)
+    ) !important;
+
+  border-bottom-color:
+    rgba(255, 131, 28, .88) !important;
+
+  box-shadow:
+    inset 0 -8px 14px
+    rgba(255, 97, 6, .08),
+
+    0 5px 13px
+    rgba(255, 89, 5, .18);
+
+  filter:
+    brightness(1.11);
+}
+
+
+/* Active tab */
+
+.nav-hit.active {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 136, 26, .04),
+      rgba(255, 99, 3, .15)
+    ) !important;
+
+  border-bottom-color:
+    #ff841d !important;
+
+  box-shadow:
+    inset 0 -8px 16px
+    rgba(255, 104, 5, .13),
+
+    0 5px 15px
+    rgba(255, 94, 5, .24);
+
+  filter:
+    brightness(1.14);
+}
+
+
+/* ---------------------------------------------------------
+   NEW LINEUPS NOTIFICATION
+   --------------------------------------------------------- */
+
+.nav-lineups.has-new-lineups {
+  border-bottom-color:
+    #ff9b35 !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 136, 23, .04),
+      rgba(255, 91, 0, .17)
+    ) !important;
+
+  box-shadow:
+    inset 0 -8px 17px
+    rgba(255, 104, 5, .16),
+
+    0 0 13px
+    rgba(255, 112, 16, .32),
+
+    0 5px 20px
+    rgba(255, 77, 0, .26);
+
+  animation:
+    burn1-lineups-ready
+    1.05s ease-in-out
+    infinite;
+}
+
+
+.nav-lineups.has-new-lineups::after {
+  content: "";
+
+  position: absolute;
+
+  right: 7%;
+  top: 20%;
+
+  width: 7px;
+  height: 7px;
+
+  border-radius:
+    50%;
+
+  background:
+    #ff9f3e;
+
+  box-shadow:
+    0 0 7px #ff8a27,
+    0 0 13px
+    rgba(255, 93, 8, .70);
+}
+
+
+@keyframes burn1-lineups-ready {
+
+  0%,
+  100% {
+    filter:
+      brightness(1);
+  }
+
+  50% {
+    filter:
+      brightness(1.28);
+  }
+}
+
+
+/* ---------------------------------------------------------
+   REDUCED MOTION
+   --------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .burn1-stage-node,
+  .nav-lineups.has-new-lineups {
+    animation:
+      none !important;
+  }
+}
+
+
+/* =========================================================
+   BURN1 V1.3 NAV + STAGE SYSTEM END
+   ========================================================= */
+
+
+/* BURN1 STAGE CLEANUP V1.3 */
+
+
+/* =========================================================
+   NO CHECKMARKS
+   The numbered stage circles themselves communicate state.
+   ========================================================= */
+
+.burn1-stage-node i {
+  display: none !important;
+}
+
+
+/* =========================================================
+   REMOVE PLAYER CONTROL DECORATIVE DOTS / COUNTERS
+   ========================================================= */
+
+.player-tab-count,
+.lock-count,
+.exclude-count,
+.exposure-count {
+  display: none !important;
+}
+
+
+/* =========================================================
+   STAGE 1 â€” GENERATING
+   ========================================================= */
+
+.burn1-stage-overlay.status-validating
+.stage-node-1,
+
+.burn1-stage-overlay.status-stage1_generating
+.stage-node-1 {
+  opacity: 1 !important;
+
+  border-color:
+    rgba(76, 220, 255, 1) !important;
+
+  background:
+    rgba(15, 83, 105, .28) !important;
+
+  box-shadow:
+    0 0 8px rgba(70, 221, 255, .95),
+    0 0 20px rgba(31, 190, 255, .55),
+    inset 0 0 12px rgba(86, 228, 255, .22) !important;
+}
+
+
+/* =========================================================
+   STAGE 2 â€” SELECTING
+   Stage 1 remains resolved; Stage 2 becomes dominant.
+   ========================================================= */
+
+.burn1-stage-overlay.status-stage2_optimizing
+.stage-node-1 {
+  opacity: .82 !important;
+
+  border-color:
+    rgba(67, 199, 229, .68) !important;
+
+  background:
+    rgba(10, 54, 68, .22) !important;
+
+  box-shadow:
+    0 0 7px rgba(48, 194, 228, .44) !important;
+}
+
+
+.burn1-stage-overlay.status-stage2_optimizing
+.stage-node-2 {
+  opacity: 1 !important;
+
+  border-color:
+    rgba(255, 154, 55, 1) !important;
+
+  background:
+    rgba(118, 48, 6, .32) !important;
+
+  box-shadow:
+    0 0 10px rgba(255, 157, 57, 1),
+    0 0 24px rgba(255, 87, 5, .68),
+    inset 0 0 12px rgba(255, 164, 64, .24) !important;
+}
+
+
+/* =========================================================
+   STAGE 3 â€” COMPLETE
+   All previous stages remain resolved.
+   #3 becomes the strongest visual state.
+   ========================================================= */
+
+.burn1-stage-overlay.status-complete
+.stage-node-1,
+
+.burn1-stage-overlay.status-complete
+.stage-node-2 {
+  opacity: .76 !important;
+
+  border-color:
+    rgba(255, 137, 39, .68) !important;
+
+  background:
+    rgba(78, 33, 6, .20) !important;
+
+  box-shadow:
+    0 0 7px rgba(255, 112, 20, .38) !important;
+}
+
+
+.burn1-stage-overlay.status-complete
+.stage-node-3 {
+  opacity: 1 !important;
+
+  border:
+    2px solid
+    rgba(255, 218, 159, 1) !important;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 172, 74, .48),
+      rgba(113, 42, 3, .28)
+    ) !important;
+
+  box-shadow:
+    0 0 10px rgba(255, 228, 185, 1),
+    0 0 24px rgba(255, 147, 43, .95),
+    0 0 42px rgba(255, 78, 3, .48) !important;
+
+  animation:
+    burn1-stage-three-finish
+    .72s ease-out
+    2 !important;
+}
+
+
+@keyframes burn1-stage-three-finish {
+
+  0% {
+    transform:
+      translate(-50%, -50%)
+      scale(.86);
+
+    filter:
+      brightness(.95);
+  }
+
+  52% {
+    transform:
+      translate(-50%, -50%)
+      scale(1.15);
+
+    filter:
+      brightness(1.32);
+  }
+
+  100% {
+    transform:
+      translate(-50%, -50%)
+      scale(1);
+
+    filter:
+      brightness(1);
+  }
+}
+
+
+/* After the completion pulse, #3 stays lit. */
+
+.burn1-stage-overlay.status-complete
+.stage-node-3 {
+  opacity: 1 !important;
+}
+
+
+/* BURN1 STAGE CLEANUP V1.3 END */
+
+
+/* BURN1 REMOVE FLOATING STAGE CIRCLES */
+
+.burn1-stage-overlay,
+.burn1-stage-node,
+.stage-node-1,
+.stage-node-2,
+.stage-node-3 {
+  display: none !important;
+}
+
+/* BURN1 REMOVE FLOATING STAGE CIRCLES END */
+
+
+/* =========================================================
+   BURN1 CONTEXTUAL HUD V1.3 START
+   ========================================================= */
+
+
+/* Retire the old permanent telemetry box entirely */
+
+.live-telemetry {
+  display: none !important;
+}
+
+
+/* ---------------------------------------------------------
+   RUNNING HUD
+   --------------------------------------------------------- */
+
+.burn1-run-hud {
+  position: fixed;
+
+  right: 3.6%;
+  top: 35.5%;
+
+  width: 17.6%;
+  min-height: 126px;
+
+  z-index: 118;
+
+  padding: 14px 15px;
+
+  border:
+    1px solid
+    rgba(90, 112, 126, .48);
+
+  border-radius: 8px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(7, 12, 17, .90),
+      rgba(10, 16, 22, .82)
+    );
+
+  backdrop-filter:
+    blur(10px);
+
+  box-shadow:
+    0 14px 34px
+    rgba(0, 0, 0, .40);
+
+  animation:
+    burn1-hud-enter
+    260ms ease-out;
+}
+
+
+.burn1-run-hud.status-stage1_generating {
+  border-color:
+    rgba(51, 202, 242, .42);
+
+  box-shadow:
+    0 14px 34px
+    rgba(0, 0, 0, .40),
+
+    0 0 22px
+    rgba(38, 192, 235, .10);
+}
+
+
+.burn1-run-hud.status-stage2_optimizing {
+  border-color:
+    rgba(255, 131, 30, .58);
+
+  box-shadow:
+    0 14px 34px
+    rgba(0, 0, 0, .42),
+
+    0 0 24px
+    rgba(255, 91, 5, .12);
+}
+
+
+.hud-kicker {
+  margin-bottom: 8px;
+
+  color:
+    rgba(176, 191, 202, .66);
+
+  font-size: 8px;
+
+  font-weight: 800;
+
+  letter-spacing:
+    1.7px;
+}
+
+
+.status-stage1_generating
+.hud-kicker {
+  color:
+    rgba(87, 218, 248, .84);
+}
+
+
+.status-stage2_optimizing
+.hud-kicker {
+  color:
+    rgba(255, 155, 60, .92);
+}
+
+
+.hud-main {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 2px;
+
+  margin-bottom: 12px;
+}
+
+
+.hud-main strong {
+  color: #f3f6f8;
+
+  font-size: 18px;
+
+  font-variant-numeric:
+    tabular-nums;
+}
+
+
+.hud-main span {
+  color:
+    rgba(166, 179, 190, .58);
+
+  font-size: 9px;
+
+  letter-spacing: .6px;
+}
+
+
+.hud-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 7px;
+}
+
+
+.hud-grid > div {
+  padding-top: 8px;
+
+  border-top:
+    1px solid
+    rgba(92, 105, 118, .22);
+}
+
+
+.hud-grid span {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color:
+    rgba(143, 156, 168, .52);
+
+  font-size: 7px;
+
+  letter-spacing:
+    1.1px;
+}
+
+
+.hud-grid strong {
+  color:
+    rgba(235, 239, 243, .92);
+
+  font-size: 10px;
+
+  font-variant-numeric:
+    tabular-nums;
+}
+
+
+/* ---------------------------------------------------------
+   COMPLETE HUD / HANDOFF
+   --------------------------------------------------------- */
+
+.burn1-ready-hud {
+  position: fixed;
+
+  right: 3.2%;
+  top: 34.5%;
+
+  width: 19.5%;
+  min-height: 148px;
+
+  z-index: 122;
+
+  padding: 15px 16px;
+
+  border:
+    1px solid
+    rgba(255, 135, 31, .64);
+
+  border-radius:
+    9px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(8, 12, 16, .95),
+      rgba(20, 12, 6, .90)
+    );
+
+  backdrop-filter:
+    blur(11px);
+
+  box-shadow:
+    0 16px 38px
+    rgba(0, 0, 0, .44),
+
+    0 0 28px
+    rgba(255, 88, 6, .11);
+
+  animation:
+    burn1-ready-hud-enter
+    360ms ease-out;
+}
+
+
+.ready-copy {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 2px;
+
+  margin-bottom: 11px;
+}
+
+
+.ready-copy small {
+  color:
+    rgba(255, 152, 58, .86);
+
+  font-size: 8px;
+
+  font-weight: 900;
+
+  letter-spacing:
+    1.8px;
+}
+
+
+.ready-copy strong {
+  color: #f8fafb;
+
+  font-size: 20px;
+}
+
+
+.ready-copy span {
+  color:
+    rgba(180, 191, 200, .65);
+
+  font-size: 9px;
+}
+
+
+.ready-stats {
+  display: grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap: 8px;
+
+  margin-bottom: 12px;
+}
+
+
+.ready-stats > div {
+  padding: 8px 9px;
+
+  border:
+    1px solid
+    rgba(90, 101, 114, .24);
+
+  border-radius:
+    5px;
+
+  background:
+    rgba(4, 7, 10, .36);
+}
+
+
+.ready-stats span {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color:
+    rgba(150, 163, 174, .52);
+
+  font-size: 7px;
+
+  letter-spacing:
+    1px;
+}
+
+
+.ready-stats strong {
+  color:
+    rgba(239, 243, 246, .96);
+
+  font-size: 12px;
+
+  font-variant-numeric:
+    tabular-nums;
+}
+
+
+.burn1-ready-hud button {
+  width: 100%;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  padding: 10px 12px;
+
+  border:
+    1px solid
+    rgba(255, 139, 36, .84);
+
+  border-radius:
+    5px;
+
+  color: #fff4e8;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 131, 26, .18),
+      rgba(255, 76, 0, .08)
+    );
+
+  font-size: 9px;
+
+  font-weight: 900;
+
+  letter-spacing:
+    1px;
+
+  cursor:
+    pointer;
+
+  transition:
+    transform 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease;
+}
+
+
+.burn1-ready-hud button:hover {
+  transform:
+    translateY(-1px);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 139, 36, .27),
+      rgba(255, 76, 0, .14)
+    );
+
+  box-shadow:
+    0 0 16px
+    rgba(255, 101, 11, .18);
+}
+
+
+.burn1-ready-hud button b {
+  color:
+    #ff9d43;
+
+  font-size: 14px;
+}
+
+
+/* ---------------------------------------------------------
+   HERO TITLE
+   --------------------------------------------------------- */
+
+.burn1-live-stage-label {
+  letter-spacing:
+    2.4px !important;
+
+  text-shadow:
+    0 0 9px
+    rgba(255,255,255,.08) !important;
+}
+
+
+.burn1-live-stage-label.status-stage1_generating {
+  color:
+    rgba(139, 225, 246, .92) !important;
+}
+
+
+.burn1-live-stage-label.status-stage2_optimizing {
+  color:
+    rgba(255, 168, 84, .96) !important;
+
+  text-shadow:
+    0 0 12px
+    rgba(255, 107, 18, .22) !important;
+}
+
+
+.burn1-live-stage-label.status-complete {
+  color:
+    rgba(255, 188, 114, .98) !important;
+
+  text-shadow:
+    0 0 13px
+    rgba(255, 120, 23, .28) !important;
+}
+
+
+/* ---------------------------------------------------------
+   MOTION
+   --------------------------------------------------------- */
+
+@keyframes burn1-hud-enter {
+
+  from {
+    opacity: 0;
+
+    transform:
+      translateX(8px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateX(0);
+  }
+}
+
+
+@keyframes burn1-ready-hud-enter {
+
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(8px)
+      scale(.985);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+
+  .burn1-run-hud,
+  .burn1-ready-hud {
+    animation:
+      none !important;
+  }
+}
+
+
+/* =========================================================
+   BURN1 CONTEXTUAL HUD V1.3 END
+   ========================================================= */
+
+
+/* =========================================================
+   BURN1 FIELD CLEANUP V1.3 START
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   REMOVE RUNNING HUD FROM THE FOOTBALL FIELD
+   Candidate progress now lives in IGNITE.
+   --------------------------------------------------------- */
+
+.burn1-run-hud {
+  display: none !important;
+}
+
+
+/* ---------------------------------------------------------
+   IGNITE BECOMES THE LIVE RUN STATUS CONTROL
+   --------------------------------------------------------- */
+
+.ignite-hit {
+  overflow: hidden !important;
+
+  isolation: isolate;
+
+  position: relative;
+}
+
+
+.ignite-hit::before {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  top: 0;
+  bottom: 0;
+
+  width: 100%;
+
+  z-index: -1;
+
+  transform:
+    scaleX(var(--ignite-progress, 0));
+
+  transform-origin:
+    left center;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(31, 199, 238, .18),
+      rgba(255, 121, 22, .30)
+    );
+
+  box-shadow:
+    inset 0 0 20px
+    rgba(255, 107, 10, .12);
+
+  transition:
+    transform 180ms linear;
+}
+
+
+.ignite-hit.running {
+  border-color:
+    rgba(255, 135, 32, .92) !important;
+
+  box-shadow:
+    0 0 11px
+    rgba(255, 116, 22, .34),
+
+    inset 0 0 16px
+    rgba(255, 87, 5, .07) !important;
+}
+
+
+.ignite-label {
+  position: relative;
+
+  z-index: 2;
+
+  font-variant-numeric:
+    tabular-nums;
+
+  letter-spacing:
+    1.25px;
+}
+
+
+/* Stage 1 gets a subtle cyan edge */
+
+.master.status-stage1_generating
+.ignite-hit.running {
+  border-color:
+    rgba(65, 213, 247, .78) !important;
+
+  box-shadow:
+    0 0 10px
+    rgba(46, 207, 244, .22),
+
+    inset 0 0 14px
+    rgba(39, 194, 230, .07) !important;
+}
+
+
+/* Stage 2 returns to strong BURN1 orange */
+
+.master.status-stage2_optimizing
+.ignite-hit.running {
+  border-color:
+    rgba(255, 142, 39, 1) !important;
+
+  box-shadow:
+    0 0 14px
+    rgba(255, 105, 12, .42),
+
+    inset 0 0 18px
+    rgba(255, 82, 2, .11) !important;
+}
+
+
+/* ---------------------------------------------------------
+   COMPLETE â€” LIGHT THE EXISTING BAKED #3
+   No extra circle. No checkmark.
+   Just an orange halo centered on the artwork.
+   --------------------------------------------------------- */
+
+.master.status-complete::after {
+  content: "";
+
+  position: absolute;
+
+  left: 73.15%;
+  top: 23.55%;
+
+  width: 34px;
+  height: 34px;
+
+  transform:
+    translate(-50%, -50%);
+
+  z-index: 104;
+
+  pointer-events: none;
+
+  border-radius: 50%;
+
+  border:
+    1px solid
+    rgba(255, 190, 102, .92);
+
+  background:
+    transparent;
+
+  box-shadow:
+    0 0 7px
+    rgba(255, 217, 159, .92),
+
+    0 0 17px
+    rgba(255, 145, 43, .90),
+
+    0 0 30px
+    rgba(255, 78, 3, .46);
+
+  animation:
+    burn1-number-three-complete
+    .82s ease-out
+    2;
+}
+
+
+@keyframes burn1-number-three-complete {
+
+  0% {
+    opacity: 0;
+
+    transform:
+      translate(-50%, -50%)
+      scale(.74);
+  }
+
+  55% {
+    opacity: 1;
+
+    transform:
+      translate(-50%, -50%)
+      scale(1.18);
+  }
+
+  100% {
+    opacity: 1;
+
+    transform:
+      translate(-50%, -50%)
+      scale(1);
+  }
+}
+
+
+/* ---------------------------------------------------------
+   PORTFOLIO SETTINGS â€” ONE CLEAR LINEUP SLIDER
+   Mask the baked duplicate rail/thumb underneath.
+   --------------------------------------------------------- */
+
+.lineup-slider {
+  -webkit-appearance:
+    none !important;
+
+  appearance:
+    none !important;
+
+  position: relative;
+
+  z-index: 40;
+
+  height: 8px !important;
+
+  border:
+    0 !important;
+
+  border-radius:
+    999px !important;
+
+  background:
+    linear-gradient(
+      90deg,
+      #ff861e 0%,
+      #ff861e 34%,
+      #283039 34%,
+      #283039 100%
+    ) !important;
+
+  box-shadow:
+    0 0 0 7px
+    rgba(7, 12, 16, .96),
+
+    inset 0 0 0 1px
+    rgba(109, 119, 129, .18) !important;
+
+  outline:
+    none !important;
+}
+
+
+.lineup-slider::-webkit-slider-thumb {
+  -webkit-appearance:
+    none !important;
+
+  appearance:
+    none !important;
+
+  width: 16px;
+  height: 16px;
+
+  border:
+    2px solid
+    rgba(255, 172, 81, .95);
+
+  border-radius:
+    50%;
+
+  background:
+    #ff851d;
+
+  box-shadow:
+    0 0 7px
+    rgba(255, 117, 22, .65);
+
+  cursor:
+    pointer;
+}
+
+
+.lineup-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+
+  border:
+    2px solid
+    rgba(255, 172, 81, .95);
+
+  border-radius:
+    50%;
+
+  background:
+    #ff851d;
+
+  box-shadow:
+    0 0 7px
+    rgba(255, 117, 22, .65);
+
+  cursor:
+    pointer;
+}
+
+
+/* Remove any legacy progress UI around this control */
+
+.lineup-slider::-moz-range-track {
+  height: 8px;
+
+  border: 0;
+
+  border-radius:
+    999px;
+
+  background:
+    #283039;
+}
+
+
+/* ---------------------------------------------------------
+   REDUCED MOTION
+   --------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .master.status-complete::after {
+    animation:
+      none !important;
+  }
+
+  .ignite-hit::before {
+    transition:
+      none !important;
+  }
+}
+
+
+/* =========================================================
+   BURN1 FIELD CLEANUP V1.3 END
+   ========================================================= */
+
+
+/* =========================================================
+   BURN1 JUMBOTRON V1.4 START
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   RETIRE OLD RUN UI
+   --------------------------------------------------------- */
+
+.burn1-ready-hud,
+.burn1-run-hud,
+.live-telemetry,
+.burn1-progress-engine,
+.burn1-live-stage-label {
+  display: none !important;
+}
+
+
+/* Kill the previous pseudo-element #3 halo.
+   The Jumbotron now owns all three stage lights. */
+
+.master.status-complete::after {
+  display: none !important;
+}
+
+
+/* ---------------------------------------------------------
+   IGNITE
+   The new artwork already contains the visual button.
+   React remains as a transparent functional hit target.
+   --------------------------------------------------------- */
+
+.ignite-hit {
+  position: absolute !important;
+
+  left: 1.2% !important;
+  top: 91.55% !important;
+
+  width: 21.6% !important;
+  height: 7.25% !important;
+
+  z-index: 150 !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: 0 !important;
+
+  background: transparent !important;
+
+  box-shadow: none !important;
+
+  overflow: visible !important;
+}
+
+
+.ignite-hit::before,
+.ignite-hit::after {
+  display: none !important;
+}
+
+
+.ignite-label {
+  display: none !important;
+}
+
+
+/* ---------------------------------------------------------
+   JUMBOTRON WRAPPER
+   --------------------------------------------------------- */
+
+.burn1-jumbotron {
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 108;
+
+  pointer-events: none;
+}
+
+
+/* ---------------------------------------------------------
+   LEFT SCREEN
+   --------------------------------------------------------- */
+
+.jumbo-left {
+  position: absolute;
+
+  left: 31.35%;
+  top: 16.35%;
+
+  width: 16.65%;
+  height: 19.1%;
+
+  overflow: hidden;
+
+  transform:
+    perspective(900px)
+    rotateY(3deg);
+
+  transform-origin:
+    center right;
+}
+
+
+.jumbo-screen-glass {
+  position: absolute;
+
+  inset: 3%;
+
+  border-radius: 2px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(2, 9, 16, .96),
+      rgba(2, 11, 19, .93)
+    );
+
+  box-shadow:
+    inset 0 0 28px
+    rgba(0, 0, 0, .88),
+
+    inset 0 0 14px
+    rgba(33, 173, 221, .08);
+}
+
+
+.jumbo-content {
+  position: absolute;
+
+  inset: 9% 9% 8% 10%;
+
+  z-index: 2;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: flex-start;
+
+  justify-content: center;
+}
+
+
+.jumbo-content small {
+  color:
+    rgba(110, 224, 255, .96);
+
+  font-size:
+    clamp(8px, .82vw, 15px);
+
+  font-weight: 900;
+
+  letter-spacing:
+    .08em;
+
+  text-shadow:
+    0 0 8px
+    rgba(39, 202, 255, .50);
+}
+
+
+.jumbo-content > span {
+  margin-top: 1px;
+
+  color:
+    rgba(140, 229, 255, .94);
+
+  font-size:
+    clamp(8px, .78vw, 14px);
+
+  font-weight: 800;
+
+  letter-spacing:
+    .065em;
+}
+
+
+.jumbo-content > strong {
+  margin-top: 5%;
+
+  color: #e8f7ff;
+
+  font-size:
+    clamp(21px, 3.05vw, 50px);
+
+  line-height: .86;
+
+  font-weight: 800;
+
+  letter-spacing:
+    .01em;
+
+  font-variant-numeric:
+    tabular-nums;
+
+  text-shadow:
+    0 0 10px
+    rgba(64, 206, 255, .25);
+}
+
+
+.jumbo-content > strong b {
+  margin:
+    0 .12em;
+
+  color:
+    rgba(191, 207, 217, .70);
+
+  font-size: .52em;
+
+  font-weight: 600;
+}
+
+
+.jumbo-content
+.jumbo-unit {
+  margin: 0;
+
+  color:
+    rgba(210, 223, 231, .82);
+
+  font-size: .31em;
+
+  letter-spacing:
+    .09em;
+}
+
+
+.jumbo-content
+.jumbo-ready {
+  color:
+    rgba(255, 150, 57, .96);
+
+  font-size:
+    clamp(18px, 2.15vw, 35px);
+
+  text-shadow:
+    0 0 12px
+    rgba(255, 100, 12, .36);
+}
+
+
+.jumbo-progress-track {
+  position: absolute;
+
+  left: 0;
+  right: 0;
+  bottom: 2%;
+
+  height: 10%;
+
+  overflow: hidden;
+
+  border-radius: 1px;
+
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(34, 66, 79, .62) 0,
+      rgba(34, 66, 79, .62) 5%,
+      transparent 5%,
+      transparent 6.6%
+    );
+}
+
+
+.jumbo-progress-track i {
+  display: block;
+
+  height: 100%;
+
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #27d8ff 0,
+      #27d8ff 5%,
+      transparent 5%,
+      transparent 6.6%
+    );
+
+  filter:
+    drop-shadow(
+      0 0 4px
+      rgba(49, 214, 255, .70)
+    );
+
+  transition:
+    width 150ms linear;
+}
+
+
+.jumbo-progress-track.complete i {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #ff942f 0,
+      #ff942f 5%,
+      transparent 5%,
+      transparent 6.6%
+    );
+
+  filter:
+    drop-shadow(
+      0 0 5px
+      rgba(255, 115, 19, .72)
+    );
+}
+
+
+/* ---------------------------------------------------------
+   RIGHT SCREEN
+   --------------------------------------------------------- */
+
+.jumbo-right {
+  position: absolute;
+
+  left: 78.95%;
+  top: 16.55%;
+
+  width: 15.1%;
+  height: 20.2%;
+
+  overflow: hidden;
+
+  transform:
+    perspective(900px)
+    rotateY(-3deg);
+
+  transform-origin:
+    center left;
+}
+
+
+.jumbo-status-content {
+  position: absolute;
+
+  inset: 9% 8% 8% 9%;
+
+  z-index: 2;
+
+  color:
+    rgba(220, 231, 237, .92);
+}
+
+
+.jumbo-status-content > small {
+  display: block;
+
+  margin-bottom: 7%;
+
+  color:
+    rgba(84, 210, 245, .94);
+
+  font-size:
+    clamp(7px, .67vw, 12px);
+
+  font-weight: 900;
+
+  letter-spacing:
+    .075em;
+
+  text-shadow:
+    0 0 7px
+    rgba(52, 201, 244, .35);
+}
+
+
+.jumbo-status-row {
+  display: flex;
+
+  align-items: center;
+
+  gap: 5%;
+
+  min-height: 19%;
+
+  color:
+    rgba(205, 215, 222, .78);
+
+  font-size:
+    clamp(6px, .57vw, 10px);
+
+  font-weight: 700;
+
+  letter-spacing:
+    .025em;
+}
+
+
+.jumbo-status-row i {
+  width: 7px;
+  height: 7px;
+
+  flex:
+    0 0 auto;
+
+  border:
+    1px solid
+    rgba(129, 156, 170, .78);
+
+  border-radius: 50%;
+
+  background:
+    rgba(5, 11, 15, .90);
+}
+
+
+.jumbo-status-row.done i {
+  border-color:
+    rgba(51, 221, 241, .92);
+
+  background:
+    rgba(42, 214, 234, .86);
+
+  box-shadow:
+    0 0 7px
+    rgba(42, 212, 238, .58);
+}
+
+
+.jumbo-status-row.active {
+  color: #fff;
+
+  text-shadow:
+    0 0 5px
+    rgba(255, 134, 30, .25);
+}
+
+
+.jumbo-status-row.active i {
+  border-color:
+    rgba(255, 170, 69, 1);
+
+  background:
+    #ff861d;
+
+  box-shadow:
+    0 0 8px
+    rgba(255, 111, 13, .72);
+}
+
+
+/* ---------------------------------------------------------
+   COMPLETE RESULTS
+   --------------------------------------------------------- */
+
+.jumbo-complete-title {
+  margin-bottom: 8%;
+
+  color:
+    rgba(255, 157, 59, .98);
+
+  font-size:
+    clamp(8px, .77vw, 14px);
+
+  font-weight: 900;
+
+  letter-spacing:
+    .065em;
+
+  text-shadow:
+    0 0 9px
+    rgba(255, 101, 10, .40);
+}
+
+
+.jumbo-result-grid {
+  display: grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap:
+    7% 8%;
+}
+
+
+.jumbo-result-grid span {
+  display: block;
+
+  margin-bottom: 2px;
+
+  color:
+    rgba(143, 168, 181, .64);
+
+  font-size:
+    clamp(5px, .46vw, 8px);
+
+  letter-spacing:
+    .08em;
+}
+
+
+.jumbo-result-grid strong {
+  display: block;
+
+  color:
+    rgba(239, 246, 250, .96);
+
+  font-size:
+    clamp(8px, .77vw, 13px);
+
+  font-variant-numeric:
+    tabular-nums;
+}
+
+
+.jumbo-lineups-hint {
+  margin-top: 8%;
+
+  color:
+    rgba(255, 166, 80, .95);
+
+  font-size:
+    clamp(6px, .55vw, 9px);
+
+  font-weight: 900;
+
+  letter-spacing:
+    .08em;
+
+  animation:
+    burn1-lineup-hint
+    1.15s ease-in-out infinite;
+}
+
+
+@keyframes burn1-lineup-hint {
+
+  0%,
+  100% {
+    opacity: .55;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   CENTER JUMBOTRON STAGE LIGHTS
+   These sit over the baked 1 / 2 / 3 circles.
+   --------------------------------------------------------- */
+
+.jumbo-stage-lights {
+  position: absolute;
+
+  inset: 0;
+}
+
+
+.jumbo-stage-light {
+  position: absolute;
+
+  top: 31.4%;
+
+  width: 31px;
+  height: 31px;
+
+  transform:
+    translate(-50%, -50%);
+
+  border-radius: 50%;
+
+  opacity: 0;
+
+  transition:
+    opacity 180ms ease,
+    box-shadow 180ms ease;
+}
+
+
+.jumbo-stage-1 {
+  left: 54.2%;
+}
+
+
+.jumbo-stage-2 {
+  left: 63.7%;
+}
+
+
+.jumbo-stage-3 {
+  left: 73.4%;
+}
+
+
+/* Stage 1 */
+
+.jumbo-stage-lights.status-queued
+.jumbo-stage-1,
+
+.jumbo-stage-lights.status-validating
+.jumbo-stage-1,
+
+.jumbo-stage-lights.status-stage1_generating
+.jumbo-stage-1 {
+  opacity: 1;
+
+  border:
+    1px solid
+    rgba(92, 225, 255, .92);
+
+  box-shadow:
+    0 0 8px
+    rgba(83, 218, 255, .90),
+
+    0 0 20px
+    rgba(31, 191, 239, .56);
+}
+
+
+/* Stage 2 */
+
+.jumbo-stage-lights.status-stage2_optimizing
+.jumbo-stage-2 {
+  opacity: 1;
+
+  border:
+    1px solid
+    rgba(255, 185, 91, .98);
+
+  box-shadow:
+    0 0 8px
+    rgba(255, 184, 82, .94),
+
+    0 0 22px
+    rgba(255, 99, 8, .65);
+}
+
+
+/* Complete */
+
+.jumbo-stage-lights.status-complete
+.jumbo-stage-3 {
+  opacity: 1;
+
+  border:
+    1px solid
+    rgba(255, 203, 133, 1);
+
+  box-shadow:
+    0 0 8px
+    rgba(255, 216, 159, .98),
+
+    0 0 20px
+    rgba(255, 142, 49, .90),
+
+    0 0 32px
+    rgba(255, 72, 2, .50);
+
+  animation:
+    burn1-stage-three-hit
+    .72s ease-out 2;
+}
+
+
+@keyframes burn1-stage-three-hit {
+
+  0% {
+    transform:
+      translate(-50%, -50%)
+      scale(.72);
+  }
+
+  55% {
+    transform:
+      translate(-50%, -50%)
+      scale(1.18);
+  }
+
+  100% {
+    transform:
+      translate(-50%, -50%)
+      scale(1);
+  }
+}
+
+
+/* ---------------------------------------------------------
+   LINEUPS TAB â€” NEW PORTFOLIO HANDOFF
+   Existing unread class remains authoritative.
+   --------------------------------------------------------- */
+
+.nav-lineups.has-new-lineups {
+  box-shadow:
+    inset 0 -2px 0
+    rgba(255, 133, 26, 1),
+
+    0 0 16px
+    rgba(255, 105, 13, .28) !important;
+}
+
+
+.nav-lineups.has-new-lineups::after {
+  content: "";
+
+  position: absolute;
+
+  right: 8%;
+  top: 17%;
+
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background:
+    #ff9a32;
+
+  box-shadow:
+    0 0 7px
+    rgba(255, 144, 46, .95),
+
+    0 0 14px
+    rgba(255, 92, 5, .55);
+
+  animation:
+    burn1-lineups-alert
+    1.1s ease-in-out infinite;
+}
+
+
+@keyframes burn1-lineups-alert {
+
+  0%,
+  100% {
+    transform: scale(.82);
+    opacity: .72;
+  }
+
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   REDUCED MOTION
+   --------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .jumbo-stage-light,
+  .jumbo-lineups-hint,
+  .nav-lineups.has-new-lineups::after {
+    animation:
+      none !important;
+
+    transition:
+      none !important;
+  }
+}
+
+
+/* =========================================================
+   BURN1 JUMBOTRON V1.4 END
+   ========================================================= */
+
+
+/* =========================================================
+   BURN1 JUMBOTRON ALIGNMENT V1.41 START
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   The Jumbotron overlays must remain INSIDE the actual
+   physical video boards in the background artwork.
+   --------------------------------------------------------- */
+
+.jumbo-left {
+  left: 30.55% !important;
+  top: 15.05% !important;
+
+  width: 17.45% !important;
+  height: 20.15% !important;
+
+  overflow: hidden !important;
+
+  clip-path:
+    polygon(
+      6% 4%,
+      96% 8%,
+      96% 92%,
+      5% 96%
+    );
+}
+
+
+.jumbo-right {
+  left: 78.05% !important;
+  top: 15.25% !important;
+
+  width: 15.55% !important;
+  height: 20.55% !important;
+
+  overflow: hidden !important;
+
+  clip-path:
+    polygon(
+      4% 8%,
+      95% 4%,
+      96% 95%,
+      5% 91%
+    );
+}
+
+
+/* Dark screen surfaces exactly cover baked demo content */
+
+.jumbo-left .jumbo-screen-glass,
+.jumbo-right .jumbo-screen-glass {
+  inset: 5% !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(2, 9, 15, .985),
+      rgba(2, 10, 17, .975)
+    ) !important;
+
+  box-shadow:
+    inset 0 0 25px rgba(0,0,0,.92),
+    inset 0 0 10px rgba(25,150,195,.08) !important;
+}
+
+
+/* ---------------------------------------------------------
+   LEFT JUMBOTRON CONTENT
+   --------------------------------------------------------- */
+
+.jumbo-content {
+  inset:
+    14% 13% 12% 15% !important;
+
+  justify-content:
+    flex-start !important;
+}
+
+
+.jumbo-content small {
+  margin-top: 1%;
+
+  font-size:
+    clamp(8px, .71vw, 13px) !important;
+}
+
+
+.jumbo-content > span {
+  font-size:
+    clamp(8px, .69vw, 12px) !important;
+}
+
+
+.jumbo-content > strong {
+  margin-top:
+    8% !important;
+
+  font-size:
+    clamp(21px, 2.65vw, 43px) !important;
+}
+
+
+.jumbo-content .jumbo-ready {
+  margin-top:
+    15% !important;
+
+  font-size:
+    clamp(17px, 1.8vw, 29px) !important;
+}
+
+
+.jumbo-progress-track {
+  left:
+    1% !important;
+
+  right:
+    2% !important;
+
+  bottom:
+    4% !important;
+
+  height:
+    9% !important;
+}
+
+
+/* ---------------------------------------------------------
+   RIGHT JUMBOTRON CONTENT
+   --------------------------------------------------------- */
+
+.jumbo-status-content {
+  inset:
+    13% 12% 11% 13% !important;
+}
+
+
+.jumbo-status-content > small {
+  margin-bottom:
+    7% !important;
+
+  font-size:
+    clamp(7px, .58vw, 10px) !important;
+}
+
+
+.jumbo-status-row {
+  min-height:
+    18% !important;
+
+  gap:
+    5% !important;
+
+  font-size:
+    clamp(6px, .50vw, 9px) !important;
+}
+
+
+.jumbo-complete-title {
+  margin-bottom:
+    8% !important;
+
+  font-size:
+    clamp(7px, .63vw, 11px) !important;
+}
+
+
+.jumbo-result-grid {
+  gap:
+    6% 7% !important;
+}
+
+
+.jumbo-result-grid span {
+  font-size:
+    clamp(5px, .39vw, 7px) !important;
+}
+
+
+.jumbo-result-grid strong {
+  font-size:
+    clamp(7px, .64vw, 11px) !important;
+}
+
+
+.jumbo-lineups-hint {
+  margin-top:
+    7% !important;
+
+  font-size:
+    clamp(5px, .45vw, 8px) !important;
+}
+
+
+/* ---------------------------------------------------------
+   CENTER 1 / 2 / 3 ALIGNMENT
+   --------------------------------------------------------- */
+
+.jumbo-stage-light {
+  top:
+    29.95% !important;
+
+  width:
+    27px !important;
+
+  height:
+    27px !important;
+}
+
+
+.jumbo-stage-1 {
+  left:
+    49.25% !important;
+}
+
+
+.jumbo-stage-2 {
+  left:
+    58.05% !important;
+}
+
+
+.jumbo-stage-3 {
+  left:
+    66.85% !important;
+}
+
+
+/* ---------------------------------------------------------
+   IDLE STATE
+   No previously loaded portfolio should make the boards
+   appear completed before a new IGNITE.
+   --------------------------------------------------------- */
+
+.burn1-jumbotron:not(.status-stage1_generating)
+:not(.status-stage2_optimizing) {
+  --jumbo-idle: 1;
+}
+
+
+/* ---------------------------------------------------------
+   Remove legacy overlay artifacts that were visually
+   covering portions of the lower dashboard.
+   --------------------------------------------------------- */
+
+.live-summary,
+.live-exposures {
+  pointer-events: none;
+}
+
+
+/* ---------------------------------------------------------
+   Preserve one clean functional IGNITE target exactly over
+   the artwork's button.
+   --------------------------------------------------------- */
+
+.ignite-hit {
+  left:
+    1.25% !important;
+
+  top:
+    89.05% !important;
+
+  width:
+    21.35% !important;
+
+  height:
+    8.15% !important;
+}
+
+
+/* =========================================================
+   BURN1 JUMBOTRON ALIGNMENT V1.41 END
+   ========================================================= */
+
+
+/* =========================================================
+   BURN1 LAYOUT FIT V1.42 START
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   SITE BUTTONS
+   Align exactly to the new background slots.
+   --------------------------------------------------------- */
+
+.site-button {
+  position: absolute !important;
+
+  top: 19.25% !important;
+
+  width: 6.25% !important;
+  height: 4.05% !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border-radius: 4px !important;
+
+  font-size:
+    clamp(8px, .72vw, 12px) !important;
+
+  line-height: 1 !important;
+
+  z-index: 115 !important;
+}
+
+
+.dk-button {
+  left: 11.55% !important;
+}
+
+
+.fd-button {
+  left: 17.85% !important;
+}
+
+
+.site-button.selected {
+  box-shadow:
+    0 0 8px rgba(255, 128, 24, .58),
+    inset 0 0 0 1px rgba(255, 188, 100, .78) !important;
+}
+
+
+/* ---------------------------------------------------------
+   PORTFOLIO SETTINGS
+   Keep the real slider inside the single intended rail.
+   --------------------------------------------------------- */
+
+.lineup-slider {
+  position: absolute !important;
+
+  left: 2.85% !important;
+  top: 42.35% !important;
+
+  width: 20.1% !important;
+  height: 7px !important;
+
+  margin: 0 !important;
+
+  z-index: 116 !important;
+
+  box-shadow:
+    0 0 0 5px rgba(5, 10, 14, .96),
+    inset 0 0 0 1px rgba(104, 116, 126, .20) !important;
+}
+
+
+/* ---------------------------------------------------------
+   PLAYER CONTROL AREA
+   Constrain all overlay content to the panel footprint.
+   --------------------------------------------------------- */
+
+.player-control-tabs,
+.player-tabs {
+  position: absolute !important;
+
+  left: 1.55% !important;
+  top: 51.5% !important;
+
+  width: 21.25% !important;
+  height: 4.4% !important;
+
+  overflow: hidden !important;
+}
+
+
+.player-control-search,
+.player-search {
+  position: absolute !important;
+
+  left: 2.75% !important;
+  top: 57.2% !important;
+
+  width: 19.9% !important;
+  height: 3.85% !important;
+
+  box-sizing: border-box !important;
+
+  overflow: hidden !important;
+}
+
+
+.player-control-list,
+.quick-player-list,
+.player-control-results {
+  position: absolute !important;
+
+  left: 2.75% !important;
+  top: 61.3% !important;
+
+  width: 19.9% !important;
+  max-height: 6.2% !important;
+
+  overflow: hidden !important;
+}
+
+
+/* ---------------------------------------------------------
+   OLD RESULT DATA
+   Do not show stale portfolio overlays while a new solve
+   is generating or selecting.
+   --------------------------------------------------------- */
+
+.master.status-stage1_generating .live-summary,
+.master.status-stage1_generating .live-exposures,
+.master.status-stage2_optimizing .live-summary,
+.master.status-stage2_optimizing .live-exposures,
+.master.status-validating .live-summary,
+.master.status-validating .live-exposures,
+.master.status-queued .live-summary,
+.master.status-queued .live-exposures {
+  display: none !important;
+}
+
+
+/* ---------------------------------------------------------
+   COMPLETED SUMMARY
+   Constrain the four metrics to Portfolio Summary only.
+   --------------------------------------------------------- */
+
+.live-summary {
+  position: absolute !important;
+
+  left: 24.55% !important;
+  top: 63.1% !important;
+
+  width: 28.0% !important;
+  height: 6.4% !important;
+
+  display: grid !important;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr)) !important;
+
+  gap: 0 !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  overflow: hidden !important;
+
+  box-sizing: border-box !important;
+
+  z-index: 105 !important;
+}
+
+
+.live-summary > div {
+  min-width: 0 !important;
+
+  display: flex !important;
+
+  flex-direction: column !important;
+
+  align-items: center !important;
+  justify-content: center !important;
+
+  overflow: hidden !important;
+}
+
+
+.live-summary strong {
+  max-width: 100% !important;
+
+  overflow: hidden !important;
+
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+
+  font-size:
+    clamp(8px, .84vw, 14px) !important;
+}
+
+
+.live-summary span {
+  max-width: 100% !important;
+
+  overflow: hidden !important;
+
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+
+  font-size:
+    clamp(5px, .43vw, 8px) !important;
+}
+
+
+/* Solver status should never cross into Stacking Breakdown */
+
+.live-summary .accent {
+  font-size:
+    clamp(7px, .76vw, 12px) !important;
+}
+
+
+/* ---------------------------------------------------------
+   TOP PLAYER EXPOSURES
+   Keep live rows clipped to their own panel.
+   --------------------------------------------------------- */
+
+.live-exposures {
+  overflow: hidden !important;
+
+  max-width: 22.8% !important;
+}
+
+
+/* =========================================================
+   BURN1 LAYOUT FIT V1.42 END
+   ========================================================= */
+
+
+/* =========================================================
+   BURN1 SHELL CLEANUP V1.43 START
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   ACCESSIBILITY
+   --------------------------------------------------------- */
+
+.burn1-visually-hidden {
+  position: absolute !important;
+
+  width: 1px !important;
+  height: 1px !important;
+
+  padding: 0 !important;
+  margin: -1px !important;
+
+  overflow: hidden !important;
+
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+
+  border: 0 !important;
+}
+
+
+/* ---------------------------------------------------------
+   DRAFTKINGS / FANDUEL
+   Artwork supplies the visible buttons.
+   React supplies only click behavior + selected glow.
+   --------------------------------------------------------- */
+
+.site-button {
+  position: absolute !important;
+
+  top: 18.85% !important;
+
+  height: 4.15% !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  border: 0 !important;
+
+  color: transparent !important;
+
+  background: transparent !important;
+
+  box-shadow: none !important;
+
+  cursor: pointer !important;
+
+  z-index: 120 !important;
+}
+
+
+.dk-button {
+  left: 8.95% !important;
+  width: 7.25% !important;
+}
+
+
+.fd-button {
+  left: 16.85% !important;
+  width: 7.15% !important;
+}
+
+
+.site-button.selected {
+  border-radius: 6px !important;
+
+  box-shadow:
+    0 0 9px rgba(255, 138, 32, .42),
+    inset 0 0 0 1px rgba(255, 178, 81, .30) !important;
+}
+
+
+.site-button:focus-visible {
+  outline:
+    2px solid rgba(255, 168, 71, .95) !important;
+
+  outline-offset:
+    2px !important;
+}
+
+
+/* ---------------------------------------------------------
+   PORTFOLIO SETTINGS
+   There is ONE live slider here: Number of Lineups.
+   Candidate Pool remains under SETTINGS.
+   --------------------------------------------------------- */
+
+.lineup-slider {
+  -webkit-appearance:
+    none !important;
+
+  appearance:
+    none !important;
+
+  position: absolute !important;
+
+  left: 2.0% !important;
+  top: 42.45% !important;
+
+  width: 21.4% !important;
+  height: 7px !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  z-index: 121 !important;
+
+  border: 0 !important;
+  border-radius: 999px !important;
+
+  /* Opaque surround intentionally masks the baked
+     rail/thumb underneath so only one slider is visible. */
+  box-shadow:
+    0 0 0 12px rgba(5, 11, 15, .985) !important;
+
+  background:
+    #263039 !important;
+
+  outline:
+    none !important;
+}
+
+
+.lineup-slider::-webkit-slider-runnable-track {
+  height: 7px !important;
+
+  border: 0 !important;
+  border-radius: 999px !important;
+
+  background:
+    #263039 !important;
+}
+
+
+.lineup-slider::-webkit-slider-thumb {
+  -webkit-appearance:
+    none !important;
+
+  appearance:
+    none !important;
+
+  width: 17px !important;
+  height: 17px !important;
+
+  margin-top: -5px !important;
+
+  border:
+    2px solid rgba(255, 183, 92, .98) !important;
+
+  border-radius:
+    50% !important;
+
+  background:
+    #ff861e !important;
+
+  box-shadow:
+    0 0 8px rgba(255, 116, 20, .58) !important;
+
+  cursor:
+    pointer !important;
+}
+
+
+.lineup-slider::-moz-range-track {
+  height: 7px !important;
+
+  border: 0 !important;
+  border-radius: 999px !important;
+
+  background:
+    #263039 !important;
+}
+
+
+.lineup-slider::-moz-range-thumb {
+  width: 17px !important;
+  height: 17px !important;
+
+  border:
+    2px solid rgba(255, 183, 92, .98) !important;
+
+  border-radius:
+    50% !important;
+
+  background:
+    #ff861e !important;
+
+  box-shadow:
+    0 0 8px rgba(255, 116, 20, .58) !important;
+
+  cursor:
+    pointer !important;
+}
+
+
+/* ---------------------------------------------------------
+   PLAYER CONTROLS
+   Remove residual decorative count/bubble artifacts.
+   Keep the functional controls.
+   --------------------------------------------------------- */
+
+.player-tab-count,
+.lock-count,
+.exclude-count,
+.exposure-count {
+  display: none !important;
+}
+
+
+/* Make the search field sit cleanly inside its intended box */
+
+.player-search,
+.player-control-search {
+  box-sizing: border-box !important;
+
+  overflow: hidden !important;
+
+  background:
+    rgba(5, 11, 15, .94) !important;
+
+  border:
+    1px solid rgba(70, 88, 101, .45) !important;
+
+  box-shadow:
+    inset 0 0 12px rgba(0, 0, 0, .32) !important;
+}
+
+
+.player-search::placeholder,
+.player-control-search::placeholder {
+  color:
+    rgba(151, 165, 176, .52) !important;
+}
+
+
+/* ---------------------------------------------------------
+   RETIRE OLD DASHBOARD OVERLAYS
+   The Jumbotron now owns the completion summary.
+
+   The actual data remains available in:
+   LINEUPS
+   EXPOSURES
+   STACKS
+   CSV/export
+   run archive/backtesting
+   --------------------------------------------------------- */
+
+.live-summary,
+.live-exposures,
+.live-telemetry {
+  display: none !important;
+}
+
+
+/* ---------------------------------------------------------
+   BOTTOM PANELS
+   Ensure no retired overlay can escape these boundaries.
+   --------------------------------------------------------- */
+
+.master {
+  overflow: hidden !important;
+}
+
+
+/* Top-player artwork/panel remains fully contained */
+
+.view-all-hit {
+  z-index: 115 !important;
+}
+
+
+/* ---------------------------------------------------------
+   JUMBOTRON
+   Explicitly preserve the system we just validated.
+   --------------------------------------------------------- */
+
+.burn1-jumbotron {
+  z-index: 108 !important;
+}
+
+
+/* =========================================================
+   BURN1 SHELL CLEANUP V1.43 END
+   ========================================================= */
+
+
+/* =========================================================
+   BURN1 LEFT RAIL CLEANUP V1.44 START
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   CLEAN SURFACES
+   These cover ONLY obsolete baked interactive artwork.
+   --------------------------------------------------------- */
+
+.burn1-left-clean-underlay {
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 118;
+
+  pointer-events: none;
+}
+
+
+.clean-mask {
+  position: absolute;
+
+  display: block;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(5, 12, 17, .995),
+      rgba(6, 14, 19, .995)
+    );
+
+  box-shadow:
+    inset 0 0 12px
+    rgba(0, 0, 0, .32);
+}
+
+
+/* Hide the two baked site buttons entirely.
+   React will draw one DK and one FD button. */
+
+.clean-site-mask {
+  left: 8.15%;
+  top: 18.05%;
+
+  width: 15.95%;
+  height: 4.95%;
+
+  border-radius: 6px;
+}
+
+
+/* Hide BOTH baked lineup-slider-looking rails.
+   One real React slider will replace them. */
+
+.clean-lineup-mask {
+  left: 1.45%;
+  top: 40.55%;
+
+  width: 22.1%;
+  height: 5.1%;
+
+  border-radius: 3px;
+}
+
+
+/* Hide stale artwork behind the live player search field. */
+
+.clean-player-search-mask {
+  left: 1.45%;
+  top: 56.15%;
+
+  width: 22.0%;
+  height: 5.45%;
+
+  border-radius: 3px;
+}
+
+
+/* Strategy-value masks.
+   Leave the row labels intact and clean only the area
+   where the live 0%-100% values overlap baked text. */
+
+.clean-strategy-value {
+  left: 9.15%;
+
+  width: 5.4%;
+  height: 2.35%;
+
+  border-radius: 2px;
+}
+
+
+.clean-strategy-value.sv-1 {
+  top: 70.45%;
+}
+
+
+.clean-strategy-value.sv-2 {
+  top: 74.25%;
+}
+
+
+.clean-strategy-value.sv-3 {
+  top: 78.10%;
+}
+
+
+.clean-strategy-value.sv-4 {
+  top: 81.95%;
+}
+
+
+.clean-strategy-value.sv-5 {
+  top: 85.75%;
+}
+
+
+/* ---------------------------------------------------------
+   SITE BUTTONS â€” ONE DK + ONE FD
+   --------------------------------------------------------- */
+
+.site-button {
+  position: absolute !important;
+
+  top: 18.30% !important;
+
+  height: 4.25% !important;
+
+  z-index: 132 !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border:
+    1px solid rgba(73, 88, 99, .72) !important;
+
+  border-radius: 5px !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(14, 22, 28, .98),
+      rgba(7, 13, 18, .98)
+    ) !important;
+
+  color:
+    rgba(224, 231, 236, .94) !important;
+
+  font-size:
+    clamp(8px, .70vw, 12px) !important;
+
+  font-weight: 700 !important;
+
+  line-height: 1 !important;
+
+  box-shadow:
+    inset 0 0 9px rgba(0, 0, 0, .38) !important;
+
+  cursor: pointer !important;
+}
+
+
+.dk-button {
+  left: 8.85% !important;
+
+  width: 7.25% !important;
+}
+
+
+.fd-button {
+  left: 16.45% !important;
+
+  width: 7.05% !important;
+}
+
+
+.site-button.selected {
+  border-color:
+    rgba(255, 176, 81, .95) !important;
+
+  color:
+    #130902 !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ff9b38,
+      #ff7612
+    ) !important;
+
+  box-shadow:
+    0 0 9px
+    rgba(255, 115, 15, .60),
+
+    inset 0 0 0 1px
+    rgba(255, 211, 156, .40) !important;
+}
+
+
+/* Undo the temporary visually-hidden treatment from
+   the previous pass. The clean mask now lets React own
+   the visible labels properly. */
+
+.site-button .burn1-visually-hidden {
+  position: static !important;
+
+  width: auto !important;
+  height: auto !important;
+
+  margin: 0 !important;
+
+  overflow: visible !important;
+
+  clip: auto !important;
+
+  white-space: normal !important;
+}
+
+
+/* ---------------------------------------------------------
+   PORTFOLIO SETTINGS â€” EXACTLY ONE SLIDER
+   --------------------------------------------------------- */
+
+.lineup-slider {
+  -webkit-appearance:
+    none !important;
+
+  appearance:
+    none !important;
+
+  position: absolute !important;
+
+  left: 2.05% !important;
+  top: 42.10% !important;
+
+  width: 20.75% !important;
+  height: 8px !important;
+
+  z-index: 133 !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: 0 !important;
+  border-radius: 999px !important;
+
+  background:
+    #29343d !important;
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(108, 122, 133, .22) !important;
+
+  outline: none !important;
+}
+
+
+.lineup-slider::-webkit-slider-runnable-track {
+  height: 8px !important;
+
+  border: 0 !important;
+  border-radius: 999px !important;
+
+  background:
+    #29343d !important;
+}
+
+
+.lineup-slider::-webkit-slider-thumb {
+  -webkit-appearance:
+    none !important;
+
+  appearance:
+    none !important;
+
+  width: 18px !important;
+  height: 18px !important;
+
+  margin-top: -5px !important;
+
+  border:
+    2px solid
+    rgba(255, 186, 99, 1) !important;
+
+  border-radius:
+    50% !important;
+
+  background:
+    #ff861e !important;
+
+  box-shadow:
+    0 0 7px
+    rgba(255, 115, 17, .60) !important;
+
+  cursor: pointer !important;
+}
+
+
+.lineup-slider::-moz-range-track {
+  height: 8px !important;
+
+  border: 0 !important;
+  border-radius: 999px !important;
+
+  background:
+    #29343d !important;
+}
+
+
+.lineup-slider::-moz-range-thumb {
+  width: 18px !important;
+  height: 18px !important;
+
+  border:
+    2px solid
+    rgba(255, 186, 99, 1) !important;
+
+  border-radius:
+    50% !important;
+
+  background:
+    #ff861e !important;
+
+  box-shadow:
+    0 0 7px
+    rgba(255, 115, 17, .60) !important;
+}
+
+
+/* ---------------------------------------------------------
+   PLAYER CONTROLS
+   Make live controls opaque enough that baked artifacts
+   cannot bleed through.
+   --------------------------------------------------------- */
+
+.player-tab,
+.player-control-tab,
+.control-tab {
+  z-index: 132 !important;
+
+  background:
+    rgba(6, 13, 18, .985) !important;
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(61, 77, 89, .42) !important;
+}
+
+
+.player-tab.active,
+.player-control-tab.active,
+.control-tab.active {
+  border-color:
+    rgba(255, 129, 24, .88) !important;
+
+  color:
+    rgba(255, 193, 108, .98) !important;
+}
+
+
+input[placeholder*="Search player"] {
+  position: absolute;
+
+  z-index: 133 !important;
+
+  box-sizing:
+    border-box !important;
+
+  background:
+    rgba(5, 12, 17, .995) !important;
+
+  border:
+    1px solid
+    rgba(65, 81, 93, .60) !important;
+
+  box-shadow:
+    0 0 0 4px rgba(5, 12, 17, .98),
+    inset 0 0 12px rgba(0, 0, 0, .36) !important;
+}
+
+
+/* Remove old count bubbles/dots once and for all. */
+
+.player-tab-count,
+.lock-count,
+.exclude-count,
+.exposure-count {
+  display: none !important;
+}
+
+
+/* ---------------------------------------------------------
+   STRATEGY CONTROLS
+   Clean up the live values sitting on top of the artwork.
+   --------------------------------------------------------- */
+
+.strategy-live-value {
+  z-index: 133 !important;
+
+  width: 5.25% !important;
+
+  overflow: hidden !important;
+
+  color:
+    rgba(255, 170, 58, .98) !important;
+
+  font-size:
+    clamp(6px, .49vw, 9px) !important;
+
+  font-weight: 800 !important;
+
+  line-height: 1 !important;
+
+  text-align: right !important;
+
+  white-space: nowrap !important;
+
+  text-shadow:
+    0 0 5px
+    rgba(255, 105, 10, .24) !important;
+}
+
+
+/* Slightly reduce the visual footprint of the strategy
+   range controls so the five rows no longer collide. */
+
+[class*="strategy"] input[type="range"] {
+  height: 6px !important;
+}
+
+
+[class*="strategy"] input[type="range"]::-webkit-slider-thumb {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+
+[class*="strategy"] input[type="range"]::-moz-range-thumb {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+
+/* ---------------------------------------------------------
+   PRESERVE THE CLEAN PARTS FROM THE LAST PASS
+   --------------------------------------------------------- */
+
+.live-summary,
+.live-exposures,
+.live-telemetry {
+  display: none !important;
+}
+
+
+.burn1-jumbotron {
+  z-index: 108 !important;
+}
+
+
+/* =========================================================
+   BURN1 LEFT RAIL CLEANUP V1.44 END
+   ========================================================= */
+
+
+/* =========================================================
+   BURN1 LEFT COLUMN FINAL ALIGNMENT V1.45 START
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   1. SITE BUTTON AREA
+   Completely cover the baked button artwork underneath.
+   --------------------------------------------------------- */
+
+.clean-site-mask {
+  left: 8.05% !important;
+  top: 17.75% !important;
+
+  width: 16.45% !important;
+  height: 5.35% !important;
+
+  border-radius: 7px !important;
+
+  background:
+    rgba(5, 12, 17, .998) !important;
+
+  box-shadow:
+    none !important;
+}
+
+
+.site-button {
+  top: 18.12% !important;
+
+  height: 4.45% !important;
+
+  border-radius: 5px !important;
+
+  z-index: 145 !important;
+}
+
+
+.dk-button {
+  left: 8.75% !important;
+
+  width: 7.15% !important;
+}
+
+
+.fd-button {
+  left: 16.25% !important;
+
+  width: 7.15% !important;
+}
+
+
+/* Keep a visible gap between the two buttons */
+
+.fd-button {
+  margin-left: .18% !important;
+}
+
+
+/* ---------------------------------------------------------
+   2. PORTFOLIO SETTINGS
+   THERE IS ONE SLIDER ONLY.
+
+   Cover every remnant of the baked double-slider artwork,
+   then draw one real React slider in the center.
+   --------------------------------------------------------- */
+
+.clean-lineup-mask {
+  left: 1.20% !important;
+  top: 39.55% !important;
+
+  width: 22.65% !important;
+  height: 7.0% !important;
+
+  border-radius: 2px !important;
+
+  background:
+    rgba(5, 12, 17, .998) !important;
+
+  box-shadow:
+    none !important;
+}
+
+
+/* Restore a little breathing room under the label */
+
+.lineup-slider {
+  left: 2.15% !important;
+  top: 42.05% !important;
+
+  width: 20.35% !important;
+  height: 7px !important;
+
+  z-index: 146 !important;
+
+  border-radius:
+    999px !important;
+
+  background:
+    #29343d !important;
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(108, 122, 133, .24) !important;
+}
+
+
+.lineup-slider::-webkit-slider-runnable-track {
+  height: 7px !important;
+
+  border-radius:
+    999px !important;
+
+  background:
+    #29343d !important;
+}
+
+
+.lineup-slider::-webkit-slider-thumb {
+  width: 17px !important;
+  height: 17px !important;
+
+  margin-top:
+    -5px !important;
+
+  background:
+    #ff861e !important;
+
+  border:
+    2px solid
+    rgba(255, 191, 111, 1) !important;
+
+  box-shadow:
+    0 0 7px
+    rgba(255, 120, 22, .55) !important;
+}
+
+
+.lineup-slider::-moz-range-track {
+  height: 7px !important;
+
+  border-radius:
+    999px !important;
+
+  background:
+    #29343d !important;
+}
+
+
+.lineup-slider::-moz-range-thumb {
+  width: 17px !important;
+  height: 17px !important;
+
+  background:
+    #ff861e !important;
+
+  border:
+    2px solid
+    rgba(255, 191, 111, 1) !important;
+}
+
+
+/* Kill stray decorative remnants below the slider */
+
+.clean-lineup-mask::after {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  height: 24%;
+
+  background:
+    rgba(5, 12, 17, .998);
+}
+
+
+/* ---------------------------------------------------------
+   3. PLAYER CONTROLS
+   Keep everything inside the left rail.
+   --------------------------------------------------------- */
+
+.clean-player-search-mask {
+  left: 1.25% !important;
+  top: 54.15% !important;
+
+  width: 22.25% !important;
+  height: 8.5% !important;
+
+  background:
+    rgba(5, 12, 17, .998) !important;
+}
+
+
+input[placeholder*="Search player"] {
+  left: 2.30% !important;
+  top: 56.75% !important;
+
+  width: 20.05% !important;
+  height: 3.35% !important;
+
+  margin: 0 !important;
+
+  z-index: 146 !important;
+
+  box-sizing:
+    border-box !important;
+
+  overflow:
+    hidden !important;
+
+  background:
+    rgba(7, 14, 19, .99) !important;
+
+  border:
+    1px solid
+    rgba(64, 82, 94, .65) !important;
+}
+
+
+/* Prevent player-control elements from bleeding right
+   onto the field. */
+
+.player-control-tabs,
+.player-tabs,
+.player-control-search,
+.player-search,
+.player-control-list,
+.quick-player-list,
+.player-control-results {
+  max-width:
+    21.2% !important;
+
+  overflow:
+    hidden !important;
+
+  box-sizing:
+    border-box !important;
+}
+
+
+/* Clean up the three control tabs */
+
+.player-control-tabs,
+.player-tabs {
+  left: 1.40% !important;
+
+  width: 21.1% !important;
+}
+
+
+.player-control-tabs button,
+.player-tabs button {
+  min-width: 0 !important;
+
+  overflow:
+    hidden !important;
+
+  text-overflow:
+    ellipsis !important;
+
+  white-space:
+    nowrap !important;
+}
+
+
+/* ---------------------------------------------------------
+   4. STRATEGY CONTROLS
+   Separate label/value/bar zones so nothing overlaps.
+   --------------------------------------------------------- */
+
+/* Increase the masks behind the live percentages so old
+   baked values cannot show underneath. */
+
+.clean-strategy-value {
+  left: 9.15% !important;
+
+  width: 6.10% !important;
+  height: 2.55% !important;
+
+  background:
+    rgba(5, 12, 17, .998) !important;
+
+  box-shadow:
+    none !important;
+}
+
+
+/* Strategy live percentage text gets its own column */
+
+.strategy-live-value {
+  left: 9.45% !important;
+
+  width: 5.20% !important;
+
+  z-index: 146 !important;
+
+  text-align:
+    right !important;
+
+  font-size:
+    clamp(6px, .46vw, 8px) !important;
+
+  line-height:
+    1 !important;
+
+  letter-spacing:
+    0 !important;
+
+  white-space:
+    nowrap !important;
+}
+
+
+/* The actual bar region starts farther right so the
+   percentage value can never collide with the rail. */
+
+[class*="strategy"] input[type="range"] {
+  max-width:
+    7.45% !important;
+
+  height:
+    6px !important;
+
+  margin-left:
+    .55% !important;
+
+  box-sizing:
+    border-box !important;
+}
+
+
+[class*="strategy"] input[type="range"]::-webkit-slider-runnable-track {
+  height:
+    6px !important;
+
+  border-radius:
+    999px !important;
+}
+
+
+[class*="strategy"] input[type="range"]::-webkit-slider-thumb {
+  width:
+    13px !important;
+
+  height:
+    13px !important;
+
+  margin-top:
+    -3.5px !important;
+
+  border-radius:
+    50% !important;
+}
+
+
+[class*="strategy"] input[type="range"]::-moz-range-track {
+  height:
+    6px !important;
+
+  border-radius:
+    999px !important;
+}
+
+
+[class*="strategy"] input[type="range"]::-moz-range-thumb {
+  width:
+    13px !important;
+
+  height:
+    13px !important;
+
+  border-radius:
+    50% !important;
+}
+
+
+/* Keep all strategy widgets clipped to the sidebar */
+
+.strategy-live-value,
+[class*="strategy"] input[type="range"] {
+  overflow:
+    hidden !important;
+}
+
+
+/* ---------------------------------------------------------
+   5. LEFT COLUMN HARD BOUNDARY
+   No interactive element is allowed to escape onto field.
+   --------------------------------------------------------- */
+
+.site-button,
+.lineup-slider,
+input[placeholder*="Search player"],
+.strategy-live-value {
+  box-sizing:
+    border-box !important;
+}
+
+
+/* ---------------------------------------------------------
+   Preserve the fixes we already like.
+   --------------------------------------------------------- */
+
+.live-summary,
+.live-exposures,
+.live-telemetry {
+  display:
+    none !important;
+}
+
+
+.burn1-jumbotron {
+  z-index:
+    108 !important;
+}
+
+
+/* =========================================================
+   BURN1 LEFT COLUMN FINAL ALIGNMENT V1.45 END
+   ========================================================= */
+
+
+/* =========================================================
+   BURN1 LEFT RAIL CORRECTION V1.46 START
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   1. SLATE & SITE
+   Remove the oversized black mask behind DK / FD.
+   --------------------------------------------------------- */
+
+.clean-site-mask {
+  display: none !important;
+}
+
+
+.site-button {
+  top: 18.05% !important;
+
+  height: 4.25% !important;
+
+  margin: 0 !important;
+
+  z-index: 150 !important;
+}
+
+
+.dk-button {
+  left: 9.00% !important;
+
+  width: 7.00% !important;
+}
+
+
+.fd-button {
+  left: 16.70% !important;
+
+  width: 6.90% !important;
+}
+
+
+/* Keep both buttons fully independent */
+
+.site-button {
+  overflow: hidden !important;
+
+  white-space: nowrap !important;
+
+  box-sizing: border-box !important;
+}
+
+
+/* ---------------------------------------------------------
+   2. PORTFOLIO SETTINGS
+   One and only one live slider.
+   --------------------------------------------------------- */
+
+/* Remove the giant mask that was hiding the label,
+   value and min/max markings. */
+
+.clean-lineup-mask {
+  display: none !important;
+}
+
+
+/* Small strip only over the baked slider rail itself. */
+
+.burn1-left-clean-underlay::before {
+  content: "";
+
+  position: absolute;
+
+  left: 1.55%;
+  top: 40.65%;
+
+  width: 21.8%;
+  height: 2.35%;
+
+  z-index: 1;
+
+  pointer-events: none;
+
+  background:
+    rgba(5, 12, 17, .995);
+
+  border-radius:
+    999px;
+}
+
+
+/* Real slider sits on top */
+
+.lineup-slider {
+  left: 2.05% !important;
+  top: 41.35% !important;
+
+  width: 20.55% !important;
+  height: 7px !important;
+
+  z-index: 151 !important;
+
+  margin: 0 !important;
+
+  background:
+    #2b353e !important;
+
+  box-shadow:
+    none !important;
+}
+
+
+.lineup-slider::-webkit-slider-runnable-track {
+  height: 7px !important;
+
+  border-radius: 999px !important;
+
+  background:
+    #2b353e !important;
+}
+
+
+.lineup-slider::-webkit-slider-thumb {
+  width: 17px !important;
+  height: 17px !important;
+
+  margin-top: -5px !important;
+
+  border:
+    2px solid
+    rgba(255, 187, 100, 1) !important;
+
+  border-radius: 50% !important;
+
+  background:
+    #ff861e !important;
+
+  box-shadow:
+    0 0 7px
+    rgba(255, 117, 18, .55) !important;
+}
+
+
+.lineup-slider::-moz-range-track {
+  height: 7px !important;
+
+  border-radius: 999px !important;
+
+  background:
+    #2b353e !important;
+}
+
+
+.lineup-slider::-moz-range-thumb {
+  width: 17px !important;
+  height: 17px !important;
+
+  border:
+    2px solid
+    rgba(255, 187, 100, 1) !important;
+
+  border-radius: 50% !important;
+
+  background:
+    #ff861e !important;
+}
+
+
+/* ---------------------------------------------------------
+   3. PLAYER CONTROLS
+   Remove the giant black mask and contain the live search.
+   --------------------------------------------------------- */
+
+.clean-player-search-mask {
+  display: none !important;
+}
+
+
+input[placeholder*="Search player"] {
+  left: 2.35% !important;
+  top: 56.25% !important;
+
+  width: 19.85% !important;
+  height: 3.35% !important;
+
+  max-width: 19.85% !important;
+
+  margin: 0 !important;
+
+  z-index: 151 !important;
+
+  box-sizing: border-box !important;
+
+  background:
+    rgba(6, 13, 18, .985) !important;
+
+  border:
+    1px solid
+    rgba(68, 86, 98, .62) !important;
+
+  border-radius:
+    3px !important;
+
+  box-shadow:
+    inset 0 0 10px
+    rgba(0, 0, 0, .32) !important;
+}
+
+
+input[placeholder*="Search player"]::placeholder {
+  color:
+    rgba(156, 169, 179, .58) !important;
+}
+
+
+/* Keep tabs and player content inside sidebar boundary */
+
+.player-control-tabs,
+.player-tabs,
+.player-control-search,
+.player-search,
+.player-control-list,
+.quick-player-list,
+.player-control-results {
+  max-width: 20.4% !important;
+
+  box-sizing: border-box !important;
+
+  overflow: hidden !important;
+}
+
+
+/* ---------------------------------------------------------
+   4. STRATEGY CONTROLS
+   Remove the black rectangles covering values/bars.
+   --------------------------------------------------------- */
+
+.clean-strategy-value {
+  display: none !important;
+}
+
+
+/* Give the live value only a tiny clean backing,
+   not a giant vertical black mask. */
+
+.strategy-live-value {
+  z-index: 151 !important;
+
+  width: 4.55% !important;
+
+  padding:
+    1px 3px !important;
+
+  box-sizing:
+    border-box !important;
+
+  overflow:
+    hidden !important;
+
+  white-space:
+    nowrap !important;
+
+  background:
+    rgba(5, 12, 17, .93) !important;
+
+  color:
+    #ff981f !important;
+
+  font-size:
+    clamp(6px, .46vw, 8px) !important;
+
+  font-weight:
+    800 !important;
+
+  text-align:
+    right !important;
+
+  border-radius:
+    2px !important;
+}
+
+
+/* Undo the overly aggressive slider shrinking from
+   the previous pass. */
+
+[class*="strategy"] input[type="range"] {
+  max-width: none !important;
+
+  margin-left: 0 !important;
+
+  height: 6px !important;
+
+  box-sizing: border-box !important;
+}
+
+
+[class*="strategy"] input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px !important;
+
+  border-radius: 999px !important;
+}
+
+
+[class*="strategy"] input[type="range"]::-webkit-slider-thumb {
+  width: 13px !important;
+  height: 13px !important;
+
+  margin-top: -3.5px !important;
+
+  border-radius: 50% !important;
+}
+
+
+[class*="strategy"] input[type="range"]::-moz-range-track {
+  height: 6px !important;
+
+  border-radius: 999px !important;
+}
+
+
+[class*="strategy"] input[type="range"]::-moz-range-thumb {
+  width: 13px !important;
+  height: 13px !important;
+
+  border-radius: 50% !important;
+}
+
+
+/* ---------------------------------------------------------
+   Preserve already-fixed areas.
+   --------------------------------------------------------- */
+
+.live-summary,
+.live-exposures,
+.live-telemetry {
+  display: none !important;
+}
+
+
+.burn1-jumbotron {
+  z-index: 108 !important;
+}
+
+
+/* =========================================================
+   BURN1 LEFT RAIL CORRECTION V1.46 END
+   ========================================================= */
+
+
+/* =========================================================
+   BURN1 FOUR AREA FIX V1.47 START
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   RESET OLD CLEANUP MASKS
+   Stop the large black rectangles first.
+   --------------------------------------------------------- */
+
+.clean-site-mask,
+.clean-strategy-value {
+  display: none !important;
+}
+
+
+/* =========================================================
+   1. SLATE & SITE
+   Use the artwork buttons visually.
+   React buttons remain invisible hit targets.
+   ========================================================= */
+
+.site-button {
+  position: absolute !important;
+
+  top: 17.72% !important;
+
+  height: 4.85% !important;
+
+  z-index: 155 !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: 0 !important;
+
+  background: transparent !important;
+
+  color: transparent !important;
+
+  box-shadow: none !important;
+
+  outline: none;
+
+  opacity: 0 !important;
+
+  cursor: pointer !important;
+}
+
+
+.dk-button {
+  left: 9.20% !important;
+  width: 7.25% !important;
+}
+
+
+.fd-button {
+  left: 16.55% !important;
+  width: 7.20% !important;
+}
+
+
+/* The buttons are invisible but still keyboard accessible */
+
+.site-button:focus-visible {
+  opacity: 1 !important;
+
+  background:
+    rgba(255, 124, 24, .12) !important;
+
+  outline:
+    2px solid rgba(255, 153, 52, .92) !important;
+
+  outline-offset:
+    1px !important;
+}
+
+
+/* =========================================================
+   2. PORTFOLIO SETTINGS
+   ONE functional slider.
+   ========================================================= */
+
+/* Re-enable ONLY a very narrow mask over the unwanted
+   baked lower rail. No masking of label/value/endpoints. */
+
+.clean-lineup-mask {
+  display: block !important;
+
+  left: 1.45% !important;
+  top: 41.15% !important;
+
+  width: 21.55% !important;
+  height: 2.05% !important;
+
+  z-index: 120 !important;
+
+  border-radius: 0 !important;
+
+  background:
+    rgba(5, 12, 17, .998) !important;
+
+  box-shadow: none !important;
+}
+
+
+/* Remove the older pseudo strip so we do not mask twice */
+
+.burn1-left-clean-underlay::before {
+  display: none !important;
+}
+
+
+/* Single real slider */
+
+.lineup-slider {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+
+  position: absolute !important;
+
+  left: 2.05% !important;
+  top: 40.45% !important;
+
+  width: 20.55% !important;
+  height: 7px !important;
+
+  z-index: 156 !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: 0 !important;
+  border-radius: 999px !important;
+
+  background:
+    #2d3841 !important;
+
+  box-shadow: none !important;
+}
+
+
+.lineup-slider::-webkit-slider-runnable-track {
+  height: 7px !important;
+
+  border-radius: 999px !important;
+
+  background:
+    #2d3841 !important;
+}
+
+
+.lineup-slider::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+
+  width: 17px !important;
+  height: 17px !important;
+
+  margin-top: -5px !important;
+
+  border:
+    2px solid #ffc077 !important;
+
+  border-radius: 50% !important;
+
+  background:
+    #ff861e !important;
+
+  box-shadow:
+    0 0 7px rgba(255, 118, 20, .55) !important;
+
+  cursor: pointer !important;
+}
+
+
+.lineup-slider::-moz-range-track {
+  height: 7px !important;
+
+  border-radius: 999px !important;
+
+  background:
+    #2d3841 !important;
+}
+
+
+.lineup-slider::-moz-range-thumb {
+  width: 17px !important;
+  height: 17px !important;
+
+  border:
+    2px solid #ffc077 !important;
+
+  border-radius: 50% !important;
+
+  background:
+    #ff861e !important;
+}
+
+
+/* =========================================================
+   3. PLAYER CONTROLS
+   Cover only the duplicate baked search box.
+   ========================================================= */
+
+.clean-player-search-mask {
+  display: block !important;
+
+  left: 1.50% !important;
+  top: 54.70% !important;
+
+  width: 21.45% !important;
+  height: 4.35% !important;
+
+  z-index: 120 !important;
+
+  background:
+    rgba(5, 12, 17, .998) !important;
+
+  border-radius: 3px !important;
+
+  box-shadow: none !important;
+}
+
+
+/* One real search field, safely contained */
+
+input[placeholder*="Search player"] {
+  left: 2.35% !important;
+  top: 55.35% !important;
+
+  width: 19.65% !important;
+  max-width: 19.65% !important;
+
+  height: 3.15% !important;
+
+  z-index: 156 !important;
+
+  margin: 0 !important;
+
+  box-sizing: border-box !important;
+
+  background:
+    rgba(6, 13, 18, .995) !important;
+
+  border:
+    1px solid rgba(73, 91, 104, .60) !important;
+
+  border-radius: 3px !important;
+
+  box-shadow:
+    inset 0 0 10px rgba(0, 0, 0, .36) !important;
+}
+
+
+/* Keep all Player Control pieces inside the sidebar */
+
+.player-control-tabs,
+.player-tabs,
+.player-control-search,
+.player-search,
+.player-control-list,
+.quick-player-list,
+.player-control-results {
+  max-width: 20.2% !important;
+
+  box-sizing: border-box !important;
+
+  overflow: hidden !important;
+}
+
+
+/* =========================================================
+   4. STRATEGY CONTROLS
+   Values get their own column LEFT of the bars.
+   ========================================================= */
+
+/* No separate black masks anymore */
+
+.clean-strategy-value {
+  display: none !important;
+}
+
+
+/* Live values cover only the tiny baked value text area */
+
+.strategy-live-value {
+  left: 10.15% !important;
+
+  width: 4.45% !important;
+
+  z-index: 156 !important;
+
+  padding: 1px 2px !important;
+
+  box-sizing: border-box !important;
+
+  overflow: hidden !important;
+
+  white-space: nowrap !important;
+
+  color:
+    #ff991f !important;
+
+  background:
+    rgba(5, 12, 17, .985) !important;
+
+  border-radius: 2px !important;
+
+  font-size:
+    clamp(6px, .44vw, 8px) !important;
+
+  font-weight: 800 !important;
+
+  line-height: 1 !important;
+
+  text-align: center !important;
+
+  letter-spacing: 0 !important;
+}
+
+
+/* Make sure strategy artwork/bar region stays visually
+   separate from the live value column. */
+
+.strategy-value-1,
+.strategy-value-2,
+.strategy-value-3,
+.strategy-value-4,
+.strategy-value-5 {
+  transform: none !important;
+}
+
+
+/* Undo prior generic range changes that were warping
+   unrelated strategy/settings controls. */
+
+[class*="strategy"] input[type="range"] {
+  max-width: initial !important;
+
+  margin-left: initial !important;
+}
+
+
+/* =========================================================
+   PROTECT THE PARTS WE ALREADY FIXED
+   ========================================================= */
+
+.live-summary,
+.live-exposures,
+.live-telemetry {
+  display: none !important;
+}
+
+
+.burn1-jumbotron {
+  z-index: 108 !important;
+}
+
+
+/* =========================================================
+   BURN1 FOUR AREA FIX V1.47 END
+   ========================================================= */
+
+/* BURN1 LEFT RAIL DELETE GUARD START */
+
+/*
+   These are obsolete overlays that duplicate artwork/UI.
+   Full Player Pool and Settings controls remain functional.
+*/
+.lineup-slider,
+.player-search-inline,
+.quick-player-popover,
+.strategy-live-value {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* BURN1 LEFT RAIL DELETE GUARD END */
+
+/* BURN1 DETAIL SURFACE FIX START */
+
+/*
+  Secondary pages use their own opaque surface.
+  This prevents the stadium artwork from showing through,
+  without placing a covering element above the page content.
+*/
+.master:not(.view-optimizer) .detail-view {
+  background: #05070a !important;
+  background-color: #05070a !important;
+  background-image: none !important;
+  opacity: 1 !important;
+}
+
+/* BURN1 DETAIL SURFACE FIX END */
+
+/* ============================================================
+   BURN1 FINAL LEFT-RAIL + VIEWPORT FIT FIX
+   ============================================================ */
+
+/*
+   DELETE the two obsolete cleanup masks.
+   These were the black rectangles showing in:
+   - PORTFOLIO SETTINGS
+   - PLAYER CONTROLS
+*/
+.clean-lineup-mask,
+.clean-player-search-mask {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+
+/*
+   Fit the entire 1672x941 BURN1 canvas inside the browser viewport
+   at Chrome 100%.
+
+   Previously width was based primarily on 100vw, which could make
+   the resulting aspect-ratio height taller than the visible window.
+*/
+.burn1-root {
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden !important;
+  background: #020304;
+}
+
+.master {
+  position: relative !important;
+
+  width: min(
+    100vw,
+    calc(100vh * 1672 / 941),
+    1672px
+  ) !important;
+
+  min-width: 0 !important;
+  max-width: 1672px !important;
+
+  aspect-ratio: 1672 / 941 !important;
+
+  margin: 0 auto !important;
+
+  overflow: hidden !important;
+}
+
+
+/*
+   Override the old mobile rule that forced the dashboard
+   back to 1100px wide.
+*/
+@media (max-width: 1200px) {
+  .master {
+    width: min(
+      100vw,
+      calc(100vh * 1672 / 941)
+    ) !important;
+
+    min-width: 0 !important;
+  }
+}
+
+/* ============================================================
+   BURN1 FINAL LEFT-RAIL + VIEWPORT FIT FIX END
+   ============================================================ */
+
+
+/* ============================================================
+   BURN1 TAB ISOLATION HARDENING
+   Each page owns its own layout.
+   Optimizer absolute overlays may NEVER bleed into detail tabs.
+   ============================================================ */
+
+
+/* ------------------------------------------------------------
+   1. NON-OPTIMIZER TABS: HIDE ALL OPTIMIZER-ONLY OVERLAYS
+   ------------------------------------------------------------ */
+
+.master:not(.view-optimizer) .left-field-hit,
+.master:not(.view-optimizer) .site-button,
+.master:not(.view-optimizer) .lineup-slider,
+.master:not(.view-optimizer) .lineup-value,
+.master:not(.view-optimizer) .player-tab-hit,
+.master:not(.view-optimizer) .player-tab-count,
+.master:not(.view-optimizer) .player-search-inline,
+.master:not(.view-optimizer) .quick-player-popover,
+.master:not(.view-optimizer) .quick-player-row,
+.master:not(.view-optimizer) .quick-empty,
+.master:not(.view-optimizer) .quick-open-pool,
+.master:not(.view-optimizer) .strategy-hit,
+.master:not(.view-optimizer) .strategy-live-value,
+.master:not(.view-optimizer) .ignite-hit,
+.master:not(.view-optimizer) .view-all-hit,
+.master:not(.view-optimizer) .clean-lineup-mask,
+.master:not(.view-optimizer) .clean-player-search-mask,
+.master:not(.view-optimizer) .live-telemetry,
+.master:not(.view-optimizer) .live-summary,
+.master:not(.view-optimizer) .live-exposures,
+.master:not(.view-optimizer) .burn1-progress-engine,
+.master:not(.view-optimizer) .burn1-route-field,
+.master:not(.view-optimizer) .burn1-live-stage-label,
+.master:not(.view-optimizer) .burn1-stage-overlay {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+
+/* ------------------------------------------------------------
+   2. DETAIL PAGE SHELL
+   ------------------------------------------------------------ */
+
+.master:not(.view-optimizer) .detail-view {
+  position: absolute !important;
+
+  left: 1.25% !important;
+  right: 1.25% !important;
+  top: 13.25% !important;
+  bottom: 1.45% !important;
+
+  z-index: 1000 !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  overflow: hidden !important;
+
+  background: #05070a !important;
+  background-image: none !important;
+
+  opacity: 1 !important;
+  isolation: isolate !important;
+}
+
+
+/* Header never moves with tab content */
+.master:not(.view-optimizer) .detail-header {
+  position: relative !important;
+  flex: 0 0 auto !important;
+  z-index: 5 !important;
+}
+
+
+/* Every tab gets its own scrollable content area */
+.master:not(.view-optimizer) .detail-content {
+  position: relative !important;
+
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+
+  z-index: 2 !important;
+}
+
+
+/* ------------------------------------------------------------
+   3. CRITICAL RESET
+   Kill inherited absolute-positioning from old optimizer CSS.
+   ------------------------------------------------------------ */
+
+.master:not(.view-optimizer) .detail-view input,
+.master:not(.view-optimizer) .detail-view select,
+.master:not(.view-optimizer) .detail-view textarea {
+  position: static !important;
+
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+
+  transform: none !important;
+
+  max-width: none !important;
+
+  box-sizing: border-box !important;
+}
+
+
+/*
+   This specifically defeats the old global rule:
+   input[placeholder*="Search player"]
+*/
+.master:not(.view-optimizer)
+.detail-view
+input[placeholder*="Search player"] {
+  position: static !important;
+
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+
+  width: auto !important;
+  height: auto !important;
+
+  transform: none !important;
+}
+
+
+/* ------------------------------------------------------------
+   4. PLAYER POOL
+   Search belongs in toolbar -- NEVER inside player rows.
+   JSX order:
+     Search | Position | Refresh | Player Count
+   ------------------------------------------------------------ */
+
+.master.view-playerPool .pool-toolbar {
+  position: relative !important;
+
+  display: grid !important;
+
+  grid-template-columns:
+    minmax(280px, 1fr)
+    90px
+    auto
+    auto !important;
+
+  gap: 10px !important;
+
+  align-items: center !important;
+
+  width: 100% !important;
+
+  margin: 0 0 12px 0 !important;
+  padding: 0 !important;
+}
+
+
+.master.view-playerPool .pool-toolbar input {
+  position: static !important;
+
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 38px !important;
+
+  margin: 0 !important;
+  padding: 0 12px !important;
+
+  border: 1px solid #303942 !important;
+  border-radius: 2px !important;
+
+  background: #090d11 !important;
+  color: #e7e9eb !important;
+
+  outline: none !important;
+
+  font-size: 11px !important;
+}
+
+
+.master.view-playerPool .pool-toolbar input:focus {
+  border-color: #ff861e !important;
+
+  box-shadow:
+    0 0 0 1px rgba(255, 134, 30, .22),
+    0 0 12px rgba(255, 103, 8, .10) !important;
+}
+
+
+.master.view-playerPool .pool-toolbar select {
+  position: static !important;
+
+  width: 90px !important;
+  height: 38px !important;
+
+  margin: 0 !important;
+}
+
+
+.master.view-playerPool .pool-toolbar button {
+  position: static !important;
+
+  height: 38px !important;
+
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+
+.master.view-playerPool .pool-toolbar strong {
+  white-space: nowrap !important;
+  justify-self: end !important;
+}
+
+
+.master.view-playerPool .player-pool-table {
+  position: relative !important;
+
+  width: 100% !important;
+
+  margin: 0 !important;
+
+  overflow: visible !important;
+}
+
+
+/* ------------------------------------------------------------
+   5. LINEUPS
+   ------------------------------------------------------------ */
+
+.master.view-lineups .current-portfolio-bar,
+.master.view-lineups .history-panel,
+.master.view-lineups .history-grid,
+.master.view-lineups .lineup-grid,
+.master.view-lineups .lineup-card {
+  position: relative !important;
+}
+
+
+.master.view-lineups .lineup-grid {
+  width: 100% !important;
+
+  grid-template-columns:
+    repeat(auto-fit, minmax(420px, 1fr)) !important;
+}
+
+
+/* ------------------------------------------------------------
+   6. EXPOSURES
+   ------------------------------------------------------------ */
+
+.master.view-exposures .exposure-table,
+.master.view-exposures .table-head,
+.master.view-exposures .exposure-table-row {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+}
+
+
+/* Keep the exposures header visible while scrolling */
+.master.view-exposures .table-head {
+  position: sticky !important;
+  top: 0 !important;
+}
+
+
+/* ------------------------------------------------------------
+   7. STACKS
+   ------------------------------------------------------------ */
+
+.master.view-stacks .strategy-report-grid,
+.master.view-stacks .strategy-report-card {
+  position: relative !important;
+
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+}
+
+
+/* ------------------------------------------------------------
+   8. SETTINGS
+   Settings controls use normal document/grid flow.
+   ------------------------------------------------------------ */
+
+.master.view-settings .settings-grid,
+.master.view-settings .settings-card,
+.master.view-settings .strategy-editor,
+.master.view-settings .dual-slider-row,
+.master.view-settings .setting-row,
+.master.view-settings .setting-switch {
+  position: relative !important;
+
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+}
+
+
+/*
+   Settings inputs must remain usable.
+   They should never inherit optimizer sidebar coordinates.
+*/
+.master.view-settings input,
+.master.view-settings select {
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+}
+
+
+/* ------------------------------------------------------------
+   9. PERMANENTLY DELETE OBSOLETE BLACK MASKS
+   ------------------------------------------------------------ */
+
+.clean-lineup-mask,
+.clean-player-search-mask {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+
+/* ============================================================
+   BURN1 TAB ISOLATION HARDENING END
+   ============================================================ */
+
