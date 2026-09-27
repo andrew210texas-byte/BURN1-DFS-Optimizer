@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useEffect, useState } from "react";
 import "./App.css";
 
 const mockExposures = [
@@ -13,6 +13,28 @@ function App() {
   const [site, setSite] = useState("DraftKings");
   const [lineups, setLineups] = useState(20);
   const [gppMix, setGppMix] = useState(50);
+  const [backendStatus, setBackendStatus] = useState("CONNECTING");
+
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/health")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("BURN1 API health check failed");
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        setBackendStatus(
+          data.ok && data.status === "ready"
+            ? "READY"
+            : "ERROR"
+        );
+      })
+      .catch(() => {
+        setBackendStatus("OFFLINE");
+      });
+  }, []);
 
   return (
     <div className="app-shell">
@@ -234,7 +256,7 @@ function App() {
 
                 <div>
                   <span>Status</span>
-                  <strong className="orange-text">READY</strong>
+                  <strong className="orange-text">{backendStatus}</strong>
                 </div>
               </div>
             </div>
@@ -321,3 +343,4 @@ function App() {
 }
 
 export default App;
+
