@@ -998,6 +998,79 @@ playTone(610);
       <div className={`master status-${runStatus}`}>
         <img className="master-image" src="/BURN1_UI_clean.png" alt="BURN1 DFS Optimizer" />
 
+        {/* BURN1 CLEAN LIVE MONITORS START */}
+        {view === "optimizer" && running && (
+          <>
+            <section
+              className={`burn1-live-monitor burn1-live-monitor-left status-${runStatus}`}
+              aria-live="polite"
+            >
+              <span className="burn1-monitor-kicker">
+                {runStatus === "stage2_optimizing"
+                  ? "SELECTING PORTFOLIO"
+                  : runStatus === "validating"
+                    ? "VALIDATING"
+                    : "GENERATING CANDIDATES"}
+              </span>
+
+              <strong className="burn1-monitor-number">
+                {runStatus === "stage2_optimizing"
+                  ? `${lineupCount} LINEUPS`
+                  : runStatus === "validating"
+                    ? "PRE-FLIGHT"
+                    : `${candidateProgress.current || 0} / ${candidateProgress.total || candidateCount}`}
+              </strong>
+
+              <div className="burn1-monitor-progress">
+                <i />
+              </div>
+            </section>
+
+            <section
+              className={`burn1-live-monitor burn1-live-monitor-right status-${runStatus}`}
+              aria-live="polite"
+            >
+              <strong className="burn1-monitor-stage">
+                {runStatus === "stage2_optimizing"
+                  ? "STAGE 2 OF 3"
+                  : runStatus === "validating"
+                    ? "PRE-FLIGHT"
+                    : "STAGE 1 OF 3"}
+              </strong>
+
+              <div className="burn1-monitor-check good">
+                <b>?</b>
+                <span>PLAYER POOL READY</span>
+              </div>
+
+              <div className="burn1-monitor-check active">
+                <b>?</b>
+                <span>
+                  {runStatus === "stage2_optimizing"
+                    ? "SELECTING PORTFOLIO"
+                    : "BUILDING CANDIDATES"}
+                </span>
+              </div>
+
+              <div className="burn1-monitor-check">
+                <b>?</b>
+                <span>
+                  {runStatus === "stage1_generating"
+                    ? `${candidateProgress.current || 0}/${candidateProgress.total || candidateCount}`
+                    : `${lineupCount} FINAL LINEUPS`}
+                </span>
+              </div>
+
+              <div className="burn1-monitor-check">
+                <b>?</b>
+                <span>TARGET {lineupCount} LINEUPS</span>
+              </div>
+            </section>
+          </>
+        )}
+        {/* BURN1 CLEAN LIVE MONITORS END */}
+
+
         <div className={`connection-orb ${backendStatus.toLowerCase()}`} title={backendDetail} />
 
         {[
@@ -1021,7 +1094,60 @@ playTone(610);
             onClick={() => switchView(key)}
           />
         ))}
-        <button className="top-hit top-sport" onClick={() => { setView("settings"); notify("NFL V1 is the active sport engine."); }} aria-label="Sport" />
+        
+        {/* BURN1 DEFINITIVE NAVIGATION LAYER START */}
+        <nav className="burn1-real-nav" aria-label="BURN1 main navigation">
+          <button
+            type="button"
+            className={view === "optimizer" ? "active" : ""}
+            onClick={() => switchView("optimizer")}
+          >
+            OPTIMIZER
+          </button>
+
+          <button
+            type="button"
+            className={view === "lineups" ? "active" : ""}
+            onClick={() => switchView("lineups")}
+          >
+            LINEUPS
+          </button>
+
+          <button
+            type="button"
+            className={view === "exposures" ? "active" : ""}
+            onClick={() => switchView("exposures")}
+          >
+            EXPOSURES
+          </button>
+
+          <button
+            type="button"
+            className={view === "stacks" ? "active" : ""}
+            onClick={() => switchView("stacks")}
+          >
+            STACKS
+          </button>
+
+          <button
+            type="button"
+            className={view === "playerPool" ? "active" : ""}
+            onClick={() => switchView("playerPool")}
+          >
+            PLAYER POOL
+          </button>
+
+          <button
+            type="button"
+            className={view === "settings" ? "active" : ""}
+            onClick={() => switchView("settings")}
+          >
+            SETTINGS
+          </button>
+        </nav>
+        {/* BURN1 DEFINITIVE NAVIGATION LAYER END */}
+
+<button className="top-hit top-sport" onClick={() => { setView("settings"); notify("NFL V1 is the active sport engine."); }} aria-label="Sport" />
         <button className="top-hit top-slate" onClick={() => { setView("settings"); notify("Week 3 - Main is the active loaded slate."); }} aria-label="Slate" />
         <button className="top-hit top-gear" onClick={() => switchView("settings")} aria-label="Settings" />
         {/* BURN1 OPTIMIZER ONLY CONTROLS START */}

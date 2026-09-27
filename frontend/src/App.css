@@ -1,4 +1,4 @@
-﻿* { box-sizing: border-box; }
+* { box-sizing: border-box; }
 html, body, #root { margin: 0; min-height: 100%; background: #020304; }
 body { font-family: "Segoe UI", Arial, sans-serif; }
 button, input, select { font: inherit; }
@@ -1443,7 +1443,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 
 
 /* =========================================================
-   STAGE 1 â€” CYAN DOMINANCE
+   STAGE 1 — CYAN DOMINANCE
    ========================================================= */
 
 .burn1-route-field.status-stage1_generating
@@ -1469,7 +1469,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 
 
 /* =========================================================
-   STAGE 2 â€” ORANGE DOMINANCE
+   STAGE 2 — ORANGE DOMINANCE
    ========================================================= */
 
 .burn1-route-field.status-stage2_optimizing
@@ -1729,7 +1729,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 /* BURN1 CLEAN FIELD V1.3 END */
 
 
-/* BURN1 V1.3 VISUAL TUNE â€” ROUTES + PIPELINE */
+/* BURN1 V1.3 VISUAL TUNE — ROUTES + PIPELINE */
 
 /* Move progress rail below the 1 / 2 / 3 stage controls */
 .burn1-progress-engine {
@@ -1797,7 +1797,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
     drop-shadow(0 0 4px rgba(46, 210, 255, .55)) !important;
 }
 
-/* Orange network â€” brighter and more obvious */
+/* Orange network — brighter and more obvious */
 .burn1-orange-routes {
   opacity: .64 !important;
   filter:
@@ -1925,7 +1925,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 
 /* ---------------------------------------------------------
    REMOVE REDUNDANT LOWER PROGRESS BAR
-   The 1 â†’ 2 â†’ 3 pipeline is now authoritative.
+   The 1 → 2 → 3 pipeline is now authoritative.
    --------------------------------------------------------- */
 
 .burn1-progress-engine {
@@ -1934,7 +1934,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 
 
 /* ---------------------------------------------------------
-   LIVE 1 â†’ 2 â†’ 3 NODE OVERLAY
+   LIVE 1 → 2 → 3 NODE OVERLAY
    --------------------------------------------------------- */
 
 .burn1-stage-overlay {
@@ -2022,7 +2022,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 
 
 /* ---------------------------------------------------------
-   STAGE 1 â€” GENERATING
+   STAGE 1 — GENERATING
    --------------------------------------------------------- */
 
 .burn1-stage-overlay.status-validating
@@ -2056,7 +2056,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 
 
 /* ---------------------------------------------------------
-   STAGE 2 â€” SELECTING
+   STAGE 2 — SELECTING
    --------------------------------------------------------- */
 
 .burn1-stage-overlay.status-stage2_optimizing
@@ -2104,7 +2104,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 
 
 /* ---------------------------------------------------------
-   COMPLETE â€” ALL 3 NODES RESOLVE,
+   COMPLETE — ALL 3 NODES RESOLVE,
    WITH #3 THE STRONGEST SIGNAL
    --------------------------------------------------------- */
 
@@ -2226,7 +2226,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 
 
 /* ---------------------------------------------------------
-   TOP NAVIGATION â€” HOVER + ACTIVE
+   TOP NAVIGATION — HOVER + ACTIVE
    --------------------------------------------------------- */
 
 .nav-hit {
@@ -2421,7 +2421,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 
 
 /* =========================================================
-   STAGE 1 â€” GENERATING
+   STAGE 1 — GENERATING
    ========================================================= */
 
 .burn1-stage-overlay.status-validating
@@ -2445,7 +2445,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 
 
 /* =========================================================
-   STAGE 2 â€” SELECTING
+   STAGE 2 — SELECTING
    Stage 1 remains resolved; Stage 2 becomes dominant.
    ========================================================= */
 
@@ -2482,7 +2482,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 
 
 /* =========================================================
-   STAGE 3 â€” COMPLETE
+   STAGE 3 — COMPLETE
    All previous stages remain resolved.
    #3 becomes the strongest visual state.
    ========================================================= */
@@ -3201,7 +3201,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 
 
 /* ---------------------------------------------------------
-   COMPLETE â€” LIGHT THE EXISTING BAKED #3
+   COMPLETE — LIGHT THE EXISTING BAKED #3
    No extra circle. No checkmark.
    Just an orange halo centered on the artwork.
    --------------------------------------------------------- */
@@ -3279,7 +3279,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 
 
 /* ---------------------------------------------------------
-   PORTFOLIO SETTINGS â€” ONE CLEAR LINEUP SLIDER
+   PORTFOLIO SETTINGS — ONE CLEAR LINEUP SLIDER
    Mask the baked duplicate rail/thumb underneath.
    --------------------------------------------------------- */
 
@@ -4097,7 +4097,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 
 
 /* ---------------------------------------------------------
-   LINEUPS TAB â€” NEW PORTFOLIO HANDOFF
+   LINEUPS TAB — NEW PORTFOLIO HANDOFF
    Existing unread class remains authoritative.
    --------------------------------------------------------- */
 
@@ -5104,7 +5104,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 
 
 /* ---------------------------------------------------------
-   SITE BUTTONS â€” ONE DK + ONE FD
+   SITE BUTTONS — ONE DK + ONE FD
    --------------------------------------------------------- */
 
 .site-button {
@@ -5206,7 +5206,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 
 
 /* ---------------------------------------------------------
-   PORTFOLIO SETTINGS â€” EXACTLY ONE SLIDER
+   PORTFOLIO SETTINGS — EXACTLY ONE SLIDER
    --------------------------------------------------------- */
 
 .lineup-slider {
@@ -7030,5 +7030,1019 @@ input[placeholder*="Search player"] {
 
 /* ============================================================
    BURN1 TAB ISOLATION HARDENING END
+   ============================================================ */
+
+
+
+/* BURN1 IGNITE ONLY FIX START */
+
+/*
+   Keep the stable pre-view-class UI.
+   Only restore the actual React IGNITE hit target.
+
+   Do NOT reactivate the old optimizer overlay layer.
+*/
+html body .burn1-root .master button.ignite-hit[aria-label="Ignite BURN1"] {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* BURN1 IGNITE ONLY FIX END */
+
+
+
+/* ============================================================
+   BURN1 FINAL INTERACTION ALIGNMENT START
+   Fix:
+   1. top navigation hit targets
+   2. jumbotron live telemetry containment
+   3. animated route alignment
+   ============================================================ */
+
+
+/* ------------------------------------------------------------
+   TOP NAVIGATION
+   The previous invisible hit targets were approximately one
+   tab to the right of the artwork labels.
+   These coordinates align each real button to its visible tab.
+   ------------------------------------------------------------ */
+
+.nav-hit {
+  position: absolute !important;
+
+  top: 6.25% !important;
+  height: 5.10% !important;
+
+  z-index: 500 !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  background: transparent !important;
+
+  cursor: pointer !important;
+
+  pointer-events: auto !important;
+}
+
+.nav-optimizer {
+  left: 28.35% !important;
+  width: 7.35% !important;
+}
+
+.nav-lineups {
+  left: 35.70% !important;
+  width: 5.65% !important;
+}
+
+.nav-exposures {
+  left: 41.35% !important;
+  width: 6.55% !important;
+}
+
+.nav-stacks {
+  left: 47.90% !important;
+  width: 5.75% !important;
+}
+
+.nav-playerpool {
+  left: 53.65% !important;
+  width: 8.20% !important;
+}
+
+.nav-settings {
+  left: 61.85% !important;
+  width: 6.15% !important;
+}
+
+
+/* Keep active indication restrained and directly under
+   the correct visible tab. */
+.nav-hit.active {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 117, 20, 0.04),
+      rgba(255, 117, 20, 0.10)
+    ) !important;
+
+  box-shadow:
+    inset 0 -2px 0 rgba(255, 137, 32, .95) !important;
+}
+
+
+/* ------------------------------------------------------------
+   LEFT JUMBOTRON
+   Real run headline stays INSIDE the left monitor.
+   ------------------------------------------------------------ */
+
+.burn1-live-stage-label {
+  position: absolute !important;
+
+  left: 26.15% !important;
+  top: 14.75% !important;
+
+  width: 17.20% !important;
+  height: 18.10% !important;
+
+  z-index: 88 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 1.1% !important;
+
+  box-sizing: border-box !important;
+
+  overflow: hidden !important;
+
+  text-align: center !important;
+  white-space: normal !important;
+
+  font-size: clamp(9px, .82vw, 15px) !important;
+  font-weight: 800 !important;
+  letter-spacing: .10em !important;
+  line-height: 1.25 !important;
+
+  color: #7cecff !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(4, 14, 20, .90),
+      rgba(3, 8, 12, .94)
+    ) !important;
+
+  border:
+    1px solid rgba(58, 203, 244, .18) !important;
+
+  pointer-events: none !important;
+}
+
+
+/* Stage 2 shifts to BURN1 amber. */
+.burn1-live-stage-label.status-stage2_optimizing {
+  color: #ffad4e !important;
+
+  border-color:
+    rgba(255, 132, 25, .24) !important;
+}
+
+
+/* ------------------------------------------------------------
+   RIGHT JUMBOTRON
+   Move live telemetry out of the football field / right edge
+   and directly into the right monitor.
+   ------------------------------------------------------------ */
+
+.live-telemetry {
+  position: absolute !important;
+
+  left: 76.20% !important;
+  top: 14.70% !important;
+
+  width: 20.25% !important;
+  height: 18.00% !important;
+
+  z-index: 88 !important;
+
+  box-sizing: border-box !important;
+
+  margin: 0 !important;
+  padding: 2.0% 1.15% .75% 1.15% !important;
+
+  overflow: hidden !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(4, 12, 17, .95),
+      rgba(4, 8, 11, .97)
+    ) !important;
+
+  border:
+    1px solid rgba(71, 204, 240, .20) !important;
+
+  box-shadow:
+    inset 0 0 20px rgba(21, 177, 218, .035) !important;
+
+  pointer-events: none !important;
+}
+
+
+/* Real stage indicator inside the right jumbotron. */
+.live-telemetry::before {
+  position: absolute !important;
+
+  left: 6% !important;
+  top: 7% !important;
+
+  color: #70e5ff !important;
+
+  font-family: Consolas, monospace !important;
+  font-size: clamp(6px, .50vw, 9px) !important;
+  font-weight: 800 !important;
+
+  letter-spacing: .12em !important;
+}
+
+
+/* Display the actual lifecycle stage. */
+.master.status-queued .live-telemetry::before,
+.master.status-validating .live-telemetry::before {
+  content: "PRE-FLIGHT / STAGE 1 OF 3" !important;
+}
+
+.master.status-stage1_generating .live-telemetry::before {
+  content: "STAGE 1 OF 3" !important;
+}
+
+.master.status-stage2_optimizing .live-telemetry::before {
+  content: "STAGE 2 OF 3" !important;
+  color: #ffad4e !important;
+}
+
+.master.status-complete .live-telemetry::before {
+  content: "STAGE 3 OF 3 / COMPLETE" !important;
+  color: #76f2a7 !important;
+}
+
+
+/* Shrink telemetry rows slightly so all information remains
+   completely inside the monitor. */
+.live-telemetry div {
+  min-height: 0 !important;
+
+  font-size: clamp(5px, .47vw, 8px) !important;
+  line-height: 1.15 !important;
+}
+
+
+/* ------------------------------------------------------------
+   FOOTBALL ROUTES
+   This SVG previously used viewport/fixed positioning.
+   Anchor it to .master so its percentage coordinates track
+   the BURN1 artwork instead of the browser window.
+   ------------------------------------------------------------ */
+
+.burn1-route-field {
+  position: absolute !important;
+
+  left: 26.20% !important;
+  top: 34.70% !important;
+
+  width: 49.00% !important;
+  height: 23.20% !important;
+
+  z-index: 82 !important;
+
+  opacity: 1 !important;
+
+  overflow: hidden !important;
+
+  pointer-events: none !important;
+
+  clip-path:
+    inset(0 0 0 0 round 7px) !important;
+}
+
+
+/* Make the live route processing visually unmistakable. */
+.burn1-route {
+  stroke-dasharray: 18 12 !important;
+
+  animation:
+    burn1-route-flow
+    .95s
+    linear
+    infinite !important;
+
+  filter:
+    drop-shadow(0 0 4px currentColor)
+    drop-shadow(0 0 8px currentColor) !important;
+}
+
+
+/* Stage 1: candidate construction is cyan dominant. */
+.burn1-route-field.status-stage1_generating
+.burn1-blue-routes {
+  opacity: 1 !important;
+}
+
+.burn1-route-field.status-stage1_generating
+.burn1-orange-routes {
+  opacity: .38 !important;
+}
+
+
+/* Stage 2: portfolio selection becomes orange dominant. */
+.burn1-route-field.status-stage2_optimizing
+.burn1-blue-routes {
+  opacity: .42 !important;
+}
+
+.burn1-route-field.status-stage2_optimizing
+.burn1-orange-routes {
+  opacity: 1 !important;
+}
+
+
+/* ------------------------------------------------------------
+   SAFETY
+   Nothing in the live processing layer may steal clicks
+   from navigation or controls.
+   ------------------------------------------------------------ */
+
+.burn1-live-stage-label,
+.burn1-stage-overlay,
+.burn1-progress-engine,
+.burn1-fire-stage,
+.burn1-route-field,
+.live-telemetry,
+.live-summary,
+.live-exposures {
+  pointer-events: none !important;
+}
+
+
+/* ============================================================
+   BURN1 FINAL INTERACTION ALIGNMENT END
+   ============================================================ */
+
+
+
+
+
+
+
+/* ============================================================
+   BURN1 REAL NAV START
+   The visible text IS the clickable React navigation.
+   No more invisible hitbox alignment.
+   ============================================================ */
+
+
+/* Retire every old invisible top navigation target. */
+.nav-hit,
+.nav-optimizer,
+.nav-lineups,
+.nav-exposures,
+.nav-stacks,
+.nav-playerpool,
+.nav-settings {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+
+/*
+   Cover only the old baked navigation labels.
+   The rendered React buttons replace them.
+*/
+.burn1-real-nav {
+  position: absolute !important;
+
+  left: 27.95% !important;
+  top: 6.15% !important;
+
+  width: 40.95% !important;
+  height: 5.25% !important;
+
+  z-index: 999999 !important;
+
+  display: grid !important;
+
+  grid-template-columns:
+    18%
+    15%
+    17%
+    15%
+    20%
+    15% !important;
+
+  align-items: stretch !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(7, 10, 13, .99),
+      rgba(4, 7, 9, .99)
+    ) !important;
+
+  border: 0 !important;
+
+  pointer-events: auto !important;
+
+  isolation: isolate !important;
+}
+
+
+.burn1-real-nav button {
+  position: relative !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  inset: auto !important;
+
+  display: flex !important;
+
+  align-items: center !important;
+  justify-content: center !important;
+
+  margin: 0 !important;
+  padding: 0 5px !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  background: transparent !important;
+
+  color: #c8cbce !important;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif !important;
+
+  font-size:
+    clamp(8px, .72vw, 12px) !important;
+
+  font-weight: 700 !important;
+
+  letter-spacing: .025em !important;
+
+  white-space: nowrap !important;
+
+  cursor: pointer !important;
+
+  opacity: 1 !important;
+  visibility: visible !important;
+
+  pointer-events: auto !important;
+
+  transform: none !important;
+
+  box-shadow: none !important;
+}
+
+
+.burn1-real-nav button:hover {
+  color: #ffffff !important;
+
+  background:
+    rgba(255, 118, 19, .07) !important;
+}
+
+
+.burn1-real-nav button.active {
+  color: #ffffff !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 112, 17, .20),
+      rgba(255, 92, 5, .08)
+    ) !important;
+
+  box-shadow:
+    inset 0 -2px 0 #ff861d,
+    0 0 14px rgba(255, 91, 5, .12) !important;
+}
+
+
+/*
+   Nothing from the live solver layer is allowed to intercept
+   navigation clicks.
+*/
+.burn1-live-stage-label,
+.burn1-stage-overlay,
+.burn1-progress-engine,
+.burn1-fire-stage,
+.burn1-route-field,
+.live-telemetry,
+.live-summary,
+.live-exposures {
+  pointer-events: none !important;
+}
+
+
+/* ============================================================
+   BURN1 REAL NAV END
+   ============================================================ */
+
+
+/* BURN1 OLD OPTIMIZER ARTWORK COVER START */
+
+/*
+   Covers the remaining baked OPTIMIZER label to the left
+   without moving or resizing the working React navigation.
+*/
+.burn1-real-nav::before {
+  content: "";
+
+  position: absolute;
+
+  left: -8.5%;
+  top: 0;
+
+  width: 9%;
+  height: 100%;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(7, 10, 13, .995),
+      rgba(4, 7, 9, .995)
+    );
+
+  pointer-events: none;
+
+  z-index: 0;
+}
+
+.burn1-real-nav button {
+  z-index: 1 !important;
+}
+
+/* BURN1 OLD OPTIMIZER ARTWORK COVER END */
+
+
+
+/* ============================================================
+   BURN1 FINAL LIVE VISUALS START
+   Definitive running-state jumbotrons + animated field routes.
+   ============================================================ */
+
+
+/* ------------------------------------------------------------
+   RETIRE OLD DYNAMIC JUMBOTRON OVERLAYS
+   The baked artwork remains untouched.
+   ------------------------------------------------------------ */
+
+.burn1-jumbotron,
+.burn1-live-stage-label,
+.live-telemetry {
+  display: none !important;
+}
+
+
+/* ------------------------------------------------------------
+   SHARED LIVE MONITOR
+   ------------------------------------------------------------ */
+
+.burn1-live-monitor {
+  position: absolute !important;
+
+  z-index: 160 !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+
+  box-sizing: border-box !important;
+
+  overflow: hidden !important;
+
+  margin: 0 !important;
+
+  color: #e9f8ff !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(3, 12, 17, .97),
+      rgba(2, 8, 12, .98)
+    ) !important;
+
+  border: 0 !important;
+
+  pointer-events: none !important;
+
+  font-family:
+    Consolas,
+    "Courier New",
+    monospace !important;
+}
+
+
+/* ------------------------------------------------------------
+   LEFT JUMBOTRON
+   Matches the actual left stadium monitor.
+   ------------------------------------------------------------ */
+
+.burn1-live-monitor-left {
+  left: 37.6% !important;
+  top: 14.2% !important;
+
+  width: 18.35% !important;
+  height: 23.6% !important;
+
+  padding:
+    2.0% 2.0%
+    1.5% 3.0% !important;
+
+  align-items: flex-start !important;
+
+  clip-path:
+    polygon(
+      5% 0%,
+      100% 5%,
+      100% 96%,
+      0% 100%
+    ) !important;
+}
+
+
+.burn1-monitor-kicker {
+  display: block !important;
+
+  max-width: 90% !important;
+
+  color: #8cecff !important;
+
+  font-size:
+    clamp(8px, .78vw, 14px) !important;
+
+  font-weight: 900 !important;
+
+  line-height: 1.14 !important;
+
+  letter-spacing: .10em !important;
+
+  text-transform: uppercase !important;
+}
+
+
+.burn1-monitor-number {
+  display: block !important;
+
+  margin-top: 7% !important;
+
+  color: #e8f8ff !important;
+
+  font-size:
+    clamp(18px, 2.20vw, 38px) !important;
+
+  font-weight: 900 !important;
+
+  line-height: 1 !important;
+
+  letter-spacing: .035em !important;
+
+  text-shadow:
+    0 0 9px rgba(62, 211, 255, .24) !important;
+}
+
+
+.burn1-monitor-progress {
+  position: relative !important;
+
+  width: 86% !important;
+  height: 8px !important;
+
+  margin-top: 11% !important;
+
+  overflow: hidden !important;
+
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #202d34 0 8px,
+      transparent 8px 11px
+    ) !important;
+}
+
+
+.burn1-monitor-progress i {
+  display: block !important;
+
+  width: 72% !important;
+  height: 100% !important;
+
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #22d7ff 0 8px,
+      transparent 8px 11px
+    ) !important;
+
+  filter:
+    drop-shadow(0 0 5px #22d7ff) !important;
+
+  animation:
+    burn1-monitor-progress-live
+    1.05s ease-in-out infinite alternate !important;
+}
+
+
+.burn1-live-monitor-left.status-stage2_optimizing
+.burn1-monitor-kicker {
+  color: #ffae54 !important;
+}
+
+
+.burn1-live-monitor-left.status-stage2_optimizing
+.burn1-monitor-progress i {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #ff861f 0 8px,
+      transparent 8px 11px
+    ) !important;
+
+  filter:
+    drop-shadow(0 0 6px #ff861f) !important;
+}
+
+
+/* ------------------------------------------------------------
+   RIGHT JUMBOTRON
+   Matches the actual right stadium monitor.
+   ------------------------------------------------------------ */
+
+.burn1-live-monitor-right {
+  left: 78.8% !important;
+  top: 14.2% !important;
+
+  width: 20.0% !important;
+  height: 23.6% !important;
+
+  padding:
+    1.4% 2.4%
+    1.0% 2.3% !important;
+
+  gap: 5% !important;
+
+  align-items: stretch !important;
+
+  clip-path:
+    polygon(
+      0% 5%,
+      94% 0%,
+      100% 100%,
+      0% 96%
+    ) !important;
+}
+
+
+.burn1-monitor-stage {
+  color: #72e8ff !important;
+
+  font-size:
+    clamp(7px, .60vw, 11px) !important;
+
+  font-weight: 900 !important;
+
+  letter-spacing: .13em !important;
+}
+
+
+.burn1-monitor-check {
+  display: grid !important;
+
+  grid-template-columns:
+    12px minmax(0, 1fr) !important;
+
+  gap: 5px !important;
+
+  align-items: center !important;
+
+  min-width: 0 !important;
+
+  color: #afb8bd !important;
+
+  font-size:
+    clamp(5px, .47vw, 8px) !important;
+
+  font-weight: 700 !important;
+
+  line-height: 1.08 !important;
+
+  letter-spacing: .025em !important;
+}
+
+
+.burn1-monitor-check b {
+  color: #66747c !important;
+
+  font-size:
+    clamp(6px, .54vw, 9px) !important;
+}
+
+
+.burn1-monitor-check.good b {
+  color: #32eaff !important;
+
+  text-shadow:
+    0 0 7px rgba(50, 234, 255, .75) !important;
+}
+
+
+.burn1-monitor-check.active b {
+  color: #ff8b25 !important;
+
+  text-shadow:
+    0 0 8px rgba(255, 111, 20, .75) !important;
+}
+
+
+.burn1-live-monitor-right.status-stage2_optimizing
+.burn1-monitor-stage {
+  color: #ffae54 !important;
+}
+
+
+/* ------------------------------------------------------------
+   RESTORE THE REAL SVG ROUTE LAYER
+   This explicitly beats the old
+   .master:not(.view-optimizer) display:none rule.
+   ------------------------------------------------------------ */
+
+.master.status-validating .burn1-route-field,
+.master.status-stage1_generating .burn1-route-field,
+.master.status-stage2_optimizing .burn1-route-field {
+  display: block !important;
+  visibility: visible !important;
+
+  position: absolute !important;
+
+  left: 31.0% !important;
+  top: 40.0% !important;
+
+  width: 67.0% !important;
+  height: 24.8% !important;
+
+  z-index: 145 !important;
+
+  opacity: 1 !important;
+
+  overflow: hidden !important;
+
+  clip-path:
+    polygon(
+      0% 10%,
+      100% 0%,
+      100% 100%,
+      0% 100%
+    ) !important;
+
+  pointer-events: none !important;
+}
+
+
+/*
+   Remove the earlier transforms that compressed the blue and
+   orange groups toward the middle of the field.
+*/
+.master.status-stage1_generating
+.burn1-route-field .burn1-blue-routes,
+
+.master.status-stage1_generating
+.burn1-route-field .burn1-orange-routes,
+
+.master.status-stage2_optimizing
+.burn1-route-field .burn1-blue-routes,
+
+.master.status-stage2_optimizing
+.burn1-route-field .burn1-orange-routes {
+  transform: none !important;
+  transform-origin: center !important;
+}
+
+
+/* Moving route dashes */
+.master.status-stage1_generating
+.burn1-route-field .burn1-route,
+
+.master.status-stage2_optimizing
+.burn1-route-field .burn1-route {
+  display: block !important;
+
+  opacity: 1 !important;
+
+  stroke-width: 3.2px !important;
+
+  stroke-dasharray:
+    18 12 !important;
+
+  animation:
+    burn1-route-flow
+    .72s linear infinite !important;
+}
+
+
+/* Stage 1: cyan leads, orange remains active. */
+.master.status-stage1_generating
+.burn1-route-field .burn1-blue-routes {
+  opacity: 1 !important;
+
+  filter:
+    drop-shadow(0 0 5px rgba(48, 224, 255, 1))
+    drop-shadow(0 0 12px rgba(28, 194, 255, .60))
+    !important;
+}
+
+
+.master.status-stage1_generating
+.burn1-route-field .burn1-orange-routes {
+  opacity: .72 !important;
+
+  filter:
+    drop-shadow(0 0 5px rgba(255, 132, 31, .92))
+    drop-shadow(0 0 10px rgba(255, 83, 7, .40))
+    !important;
+}
+
+
+/* Stage 2: orange leads, cyan stays alive. */
+.master.status-stage2_optimizing
+.burn1-route-field .burn1-blue-routes {
+  opacity: .58 !important;
+
+  filter:
+    drop-shadow(0 0 5px rgba(48, 224, 255, .70))
+    !important;
+}
+
+
+.master.status-stage2_optimizing
+.burn1-route-field .burn1-orange-routes {
+  opacity: 1 !important;
+
+  filter:
+    drop-shadow(0 0 6px rgba(255, 161, 60, 1))
+    drop-shadow(0 0 14px rgba(255, 82, 3, .70))
+    !important;
+}
+
+
+/* Tracker nodes pulse during the solve. */
+.master.status-stage1_generating
+.burn1-route-field .burn1-tracker,
+
+.master.status-stage2_optimizing
+.burn1-route-field .burn1-tracker {
+  display: block !important;
+
+  opacity: 1 !important;
+
+  animation:
+    burn1-tracker-pulse
+    .80s ease-in-out infinite alternate !important;
+}
+
+
+@keyframes burn1-monitor-progress-live {
+  from {
+    width: 28%;
+    opacity: .74;
+  }
+
+  to {
+    width: 92%;
+    opacity: 1;
+  }
+}
+
+
+@keyframes burn1-tracker-pulse {
+  from {
+    opacity: .55;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   SAFETY
+   Solver visuals can never intercept navigation.
+   ------------------------------------------------------------ */
+
+.burn1-live-monitor,
+.burn1-route-field,
+.burn1-route-field *,
+.burn1-stage-overlay,
+.burn1-progress-engine,
+.burn1-fire-stage {
+  pointer-events: none !important;
+}
+
+
+/* ============================================================
+   BURN1 FINAL LIVE VISUALS END
    ============================================================ */
 
