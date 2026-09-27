@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 from threading import Lock, Thread
+from time import perf_counter
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
@@ -16,7 +17,7 @@ from run_burn1_live import SITE_CONFIG, load_players
 
 app = FastAPI(
     title="BURN1 DFS API",
-    version="1.0.0",
+    version="1.1.0",
 )
 
 app.add_middleware(
@@ -31,15 +32,50 @@ app.add_middleware(
 )
 
 
+SITE_CAPS = {
+    "dk": 50000,
+    "fd": 60000,
+}
+
+
 class Burn1RunRequest(BaseModel):
     site: str
     lineup_count: int = Field(default=20, ge=1, le=150)
-    candidate_count: int = Field(default=60, ge=1)
-    min_unique_players: int = Field(default=2, ge=1)
+    candidate_count: int = Field(default=60, ge=1, le=500)
+    min_unique_players: int = Field(default=2, ge=1, le=9)
+
     candidate_gpp_fraction: float = Field(
         default=0.5,
         ge=0.0,
         le=1.0,
+    )
+
+    qb_stack_min: int = Field(default=1, ge=0, le=4)
+    bring_back_min: int = Field(default=0, ge=0, le=4)
+    rb_dst_stack: bool = False
+
+    locked_player_ids: list[str] = Field(
+        default_factory=list
+    )
+
+    excluded_player_ids: list[str] = Field(
+        default_factory=list
+    )
+
+    min_player_exposures: dict[str, float] = Field(
+        default_factory=dict
+    )
+
+    max_player_exposures: dict[str, float] = Field(
+        default_factory=dict
+    )
+
+    min_strategy_exposures: dict[str, float] = Field(
+        default_factory=dict
+    )
+
+    max_strategy_exposures: dict[str, float] = Field(
+        default_factory=dict
     )
 
 
@@ -54,6 +90,74 @@ def health():
         "application": "BURN1 DFS",
         "engine": "NFL V1",
         "status": "ready",
+        "api_version": "1.1.0",
+    }
+
+
+def _site_key(value: str) -> str:
+    site_key = value.lower().strip()
+
+    if site_key not in SITE_CONFIG:
+        raise HTTPException(
+            status_code=404,
+            detail="site must be 'dk' or 'fd'.",
+        )
+
+    return site_key
+
+
+@app.get("/api/player-pool/{site_key}")
+def get_player_pool(site_key: str):
+    site_key = _site_key(site_key)
+    site = SITE_CONFIG[site_key]
+
+    try:
+        players = load_players(
+            site["pool_file"],
+            site["site_name"],
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"Could not load player pool: {exc}"
+            ),
+        ) from exc
+
+    rows = [
+        {
+            "player_id": player.player_id,
+            "name": player.name,
+            "position": player.position,
+            "team": player.team,
+            "opponent": player.opponent,
+            "salary": player.salary,
+            "status": player.status,
+            "projection": round(
+                float(player.projection),
+                4,
+            ),
+            "roster_positions": list(
+                player.roster_positions
+            ),
+        }
+        for player in players
+    ]
+
+    rows.sort(
+        key=lambda row: (
+            row["position"],
+            -row["projection"],
+            row["name"],
+        )
+    )
+
+    return {
+        "site": site["site_name"],
+        "salary_cap": SITE_CAPS[site_key],
+        "player_count": len(rows),
+        "players": rows,
     }
 
 
@@ -66,6 +170,13 @@ def run_job(
     job_id: str,
     request: Burn1RunRequest,
 ):
+    started = perf_counter()
+
+    previous_status = None
+    previous_status_started = started
+
+    timings = {}
+
     try:
         site_key = request.site.lower()
 
@@ -82,19 +193,63 @@ def run_job(
         )
 
         def status_callback(event):
+            nonlocal previous_status
+            nonlocal previous_status_started
+
+            now = perf_counter()
+
+            if previous_status is not None:
+                timings[
+                    f"{previous_status}_seconds"
+                ] = round(
+                    now - previous_status_started,
+                    3,
+                )
+
+            previous_status = event.status
+            previous_status_started = now
+
             update_job(
                 job_id,
                 status=event.status,
                 message=event.message,
+                elapsed_seconds=round(
+                    now - started,
+                    3,
+                ),
+                timings=dict(timings),
             )
 
         config = Burn1PortfolioConfig(
             site=site["site_name"],
             lineup_count=request.lineup_count,
             candidate_count=request.candidate_count,
-            min_unique_players=request.min_unique_players,
+            min_unique_players=(
+                request.min_unique_players
+            ),
             candidate_gpp_fraction=(
                 request.candidate_gpp_fraction
+            ),
+            qb_stack_min=request.qb_stack_min,
+            bring_back_min=request.bring_back_min,
+            rb_dst_stack=request.rb_dst_stack,
+            locked_player_ids=set(
+                request.locked_player_ids
+            ),
+            excluded_player_ids=set(
+                request.excluded_player_ids
+            ),
+            min_player_exposures=dict(
+                request.min_player_exposures
+            ),
+            max_player_exposures=dict(
+                request.max_player_exposures
+            ),
+            min_strategy_exposures=dict(
+                request.min_strategy_exposures
+            ),
+            max_strategy_exposures=dict(
+                request.max_strategy_exposures
             ),
         )
 
@@ -106,6 +261,11 @@ def run_job(
 
         payload = response.to_dict()
 
+        total_seconds = round(
+            perf_counter() - started,
+            3,
+        )
+
         if response.ok:
             update_job(
                 job_id,
@@ -116,7 +276,11 @@ def run_job(
                 ),
                 result=payload["result"],
                 error=None,
+                total_seconds=total_seconds,
+                elapsed_seconds=total_seconds,
+                timings=dict(timings),
             )
+
         else:
             update_job(
                 job_id,
@@ -124,9 +288,17 @@ def run_job(
                 message=payload["error"]["message"],
                 result=None,
                 error=payload["error"],
+                total_seconds=total_seconds,
+                elapsed_seconds=total_seconds,
+                timings=dict(timings),
             )
 
     except Exception as exc:
+        total_seconds = round(
+            perf_counter() - started,
+            3,
+        )
+
         update_job(
             job_id,
             status="error",
@@ -138,6 +310,9 @@ def run_job(
                 "message": str(exc),
                 "details": "",
             },
+            total_seconds=total_seconds,
+            elapsed_seconds=total_seconds,
+            timings=dict(timings),
         )
 
 
@@ -152,6 +327,22 @@ def start_run(request: Burn1RunRequest):
             ),
         )
 
+    conflicts = (
+        set(request.locked_player_ids)
+        & set(request.excluded_player_ids)
+    )
+
+    if conflicts:
+        conflict = sorted(conflicts)[0]
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Player {conflict} cannot be both "
+                "locked and excluded."
+            ),
+        )
+
     job_id = str(uuid4())
 
     with jobs_lock:
@@ -161,6 +352,9 @@ def start_run(request: Burn1RunRequest):
             "message": "BURN1 run queued.",
             "result": None,
             "error": None,
+            "elapsed_seconds": 0.0,
+            "total_seconds": None,
+            "timings": {},
         }
 
     thread = Thread(
@@ -168,9 +362,10 @@ def start_run(request: Burn1RunRequest):
         args=(job_id, request),
         daemon=True,
     )
+
     thread.start()
 
-    return jobs[job_id]
+    return dict(jobs[job_id])
 
 
 @app.get("/api/runs/{job_id}")

@@ -1,628 +1,651 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import "./App.css";
 
+const API = "http://127.0.0.1:8000";
+
 function App() {
-  const [site, setSite] = useState("DraftKings");
-  const [lineups, setLineups] = useState(20);
-  const [gppMix, setGppMix] = useState(50);
+  const [site, setSite] = useState("dk");
+  const [lineupCount, setLineupCount] = useState(20);
+  const [running, setRunning] = useState(false);
+  const [status, setStatus] = useState("READY");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [result, setResult] = useState(null);
+  const [view, setView] = useState("optimizer");
 
-  const [backendStatus, setBackendStatus] = useState("CONNECTING");
-  const [runStatus, setRunStatus] = useState("ready");
-  const [runMessage, setRunMessage] = useState("");
-  const [runResult, setRunResult] = useState(null);
-  const [runError, setRunError] = useState("");
-  const [isRunning, setIsRunning] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const siteName =
+    site === "dk" ? "DraftKings" : "FanDuel";
 
-  const audioContextRef = useRef(null);
-  const previousStatusRef = useRef("");
+  const topExposures = useMemo(
+    () => result?.exposures?.slice(0, 10) ?? [],
+    [result]
+  );
 
-  useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/health")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("BURN1 API health check failed");
-        }
+  async function ignite() {
+    if (running) return;
 
-        return response.json();
-      })
-      .then((data) => {
-        setBackendStatus(
-          data.ok && data.status === "ready"
-            ? "READY"
-            : "ERROR"
-        );
-      })
-      .catch(() => {
-        setBackendStatus("OFFLINE");
-      });
-  }, []);
-
-  function playTone(frequency, duration, type = "sine", volume = 0.04) {
-    if (!soundEnabled) {
-      return;
-    }
-
-    const AudioContext =
-      window.AudioContext || window.webkitAudioContext;
-
-    if (!AudioContext) {
-      return;
-    }
-
-    if (!audioContextRef.current) {
-      audioContextRef.current = new AudioContext();
-    }
-
-    const context = audioContextRef.current;
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-
-    oscillator.type = type;
-    oscillator.frequency.value = frequency;
-
-    gain.gain.setValueAtTime(volume, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(
-      0.001,
-      context.currentTime + duration
-    );
-
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-
-    oscillator.start();
-    oscillator.stop(context.currentTime + duration);
-  }
-
-  function playStatusSound(status) {
-    if (status === previousStatusRef.current) {
-      return;
-    }
-
-    previousStatusRef.current = status;
-
-    if (status === "validating") {
-      playTone(260, 0.12, "sine");
-    } else if (status === "stage1_generating") {
-      playTone(360, 0.18, "triangle");
-    } else if (status === "stage2_optimizing") {
-      playTone(470, 0.22, "triangle");
-    } else if (status === "complete") {
-      playTone(620, 0.18, "sine");
-      setTimeout(() => {
-        playTone(820, 0.28, "sine");
-      }, 120);
-    } else if (status === "error") {
-      playTone(145, 0.35, "sawtooth", 0.03);
-    }
-  }
-
-  async function igniteBurn1() {
-    if (isRunning) {
-      return;
-    }
-
-    setIsRunning(true);
-    setRunResult(null);
-    setRunError("");
-    setRunMessage("Starting BURN1...");
-    setRunStatus("queued");
-    previousStatusRef.current = "";
-
-    playTone(180, 0.12, "sawtooth", 0.035);
+    setRunning(true);
+    setResult(null);
+    setError("");
+    setMessage("Starting BURN1...");
+    setStatus("QUEUED");
 
     try {
       const startResponse = await fetch(
-        "http://127.0.0.1:8000/api/runs",
+        `${API}/api/runs`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            site: site === "DraftKings" ? "dk" : "fd",
-            lineup_count: lineups,
+            site,
+            lineup_count: lineupCount,
             candidate_count: 60,
             min_unique_players: 2,
-            candidate_gpp_fraction: gppMix / 100,
+            candidate_gpp_fraction: 0.50,
+
+            locked_player_ids: [],
+            excluded_player_ids: [],
+
+            min_player_exposures: {},
+            max_player_exposures: {},
+
+            min_strategy_exposures: {},
+            max_strategy_exposures: {},
           }),
         }
       );
 
       if (!startResponse.ok) {
         throw new Error(
-          `BURN1 API returned ${startResponse.status}`
+          `BURN1 returned HTTP ${startResponse.status}`
         );
       }
 
-      const startedJob = await startResponse.json();
-      const jobId = startedJob.job_id;
+      const started = await startResponse.json();
+
+      if (!started.job_id) {
+        throw new Error("BURN1 did not return a job ID.");
+      }
 
       while (true) {
         await new Promise((resolve) =>
           setTimeout(resolve, 750)
         );
 
-        const statusResponse = await fetch(
-          `http://127.0.0.1:8000/api/runs/${jobId}`
+        const response = await fetch(
+          `${API}/api/runs/${started.job_id}`
         );
 
-        if (!statusResponse.ok) {
+        if (!response.ok) {
           throw new Error(
             "Could not retrieve BURN1 run status."
           );
         }
 
-        const job = await statusResponse.json();
+        const job = await response.json();
 
-        setRunStatus(job.status);
-        setRunMessage(job.message || "");
-        playStatusSound(job.status);
+        setStatus(
+          String(job.status || "running")
+            .replaceAll("_", " ")
+            .toUpperCase()
+        );
+
+        setMessage(job.message || "");
 
         if (job.status === "complete") {
-          setRunResult(job.result);
-          setIsRunning(false);
-          break;
+          setResult(job.result);
+          setRunning(false);
+
+          sessionStorage.setItem(
+            "burn1LastRun",
+            JSON.stringify(job.result)
+          );
+
+          return;
         }
 
         if (job.status === "error") {
-          setRunError(
+          throw new Error(
             job.error?.message ||
-              job.message ||
-              "BURN1 run failed."
+            job.message ||
+            "BURN1 run failed."
           );
-          setIsRunning(false);
-          break;
         }
       }
-    } catch (error) {
-      setRunStatus("error");
-      setRunError(error.message);
-      setRunMessage("BURN1 run failed.");
-      setIsRunning(false);
-      playStatusSound("error");
+    } catch (err) {
+      setStatus("ERROR");
+      setError(err.message);
+      setRunning(false);
     }
   }
 
-  function stageClass(stage) {
-    const statusOrder = {
-      ready: 0,
-      queued: 0,
-      validating: 0,
-      stage1_generating: 1,
-      stage2_optimizing: 2,
-      complete: 3,
-      error: -1,
-    };
+  function changeSite(nextSite) {
+    if (running) return;
 
-    const current = statusOrder[runStatus] ?? 0;
-
-    if (runStatus === "complete") {
-      return "stage complete";
-    }
-
-    if (current > stage) {
-      return "stage complete";
-    }
-
-    if (current === stage) {
-      return "stage active";
-    }
-
-    return "stage";
+    setSite(nextSite);
+    setResult(null);
+    setStatus("READY");
+    setMessage("");
+    setError("");
   }
 
-  const resultLineups =
-    runResult?.generated_lineups ?? "—";
+  function exportCsv() {
+    if (!result?.lineups?.length) return;
 
-  const totalProjection =
-    runResult?.total_projection != null
-      ? Number(runResult.total_projection).toFixed(2)
-      : "—";
+    const rows = [[
+      "lineup",
+      "slot",
+      "player_id",
+      "name",
+      "position",
+      "team",
+      "opponent",
+      "salary",
+      "projection",
+    ]];
 
-  const averageProjection =
-    runResult?.total_projection != null &&
-    runResult?.generated_lineups
-      ? (
-          runResult.total_projection /
-          runResult.generated_lineups
-        ).toFixed(2)
-      : "—";
+    for (const lineup of result.lineups) {
+      for (const player of lineup.players) {
+        rows.push([
+          lineup.lineup_number,
+          player.roster_slot,
+          player.player_id,
+          player.name,
+          player.position,
+          player.team,
+          player.opponent,
+          player.salary,
+          player.projection,
+        ]);
+      }
+    }
 
-  const solverStatus =
-    runResult?.solver_status ?? "—";
+    const csv = rows
+      .map((row) =>
+        row.map((value) =>
+          `"${String(value ?? "").replaceAll('"', '""')}"`
+        ).join(",")
+      )
+      .join("\n");
 
-  const exposures =
-    runResult?.exposures?.slice(0, 5) ?? [];
+    const blob = new Blob(
+      [csv],
+      { type: "text/csv;charset=utf-8" }
+    );
 
-  const strategy =
-    runResult?.strategy_summary ?? {};
+    const url = URL.createObjectURL(blob);
+
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download =
+      `burn1_${site}_${lineupCount}_lineups.csv`;
+
+    anchor.click();
+
+    URL.revokeObjectURL(url);
+  }
 
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <div className="brand">
-          <div className="brand-main">
-            BURN<span>1</span>
-          </div>
-          <div className="brand-sub">DFS OPTIMIZER</div>
+    <div className="app">
+
+      <div className="master">
+
+        {/* This IS the exact uploaded UI. */}
+        <img
+          className="master-image"
+          src="/BURN1_UI.png"
+          alt="BURN1 DFS Optimizer"
+        />
+
+        {/* TOP NAV */}
+        <button
+          className="hit nav optimizer"
+          onClick={() => setView("optimizer")}
+          aria-label="Optimizer"
+        />
+
+        <button
+          className="hit nav lineups"
+          onClick={() => setView("lineups")}
+          aria-label="Lineups"
+        />
+
+        <button
+          className="hit nav exposures"
+          onClick={() => setView("exposures")}
+          aria-label="Exposures"
+        />
+
+        <button
+          className="hit nav stacks"
+          onClick={() => setView("stacks")}
+          aria-label="Stacks"
+        />
+
+        {/* SITE */}
+        <button
+          className="hit dk"
+          disabled={running}
+          onClick={() => changeSite("dk")}
+          aria-label="DraftKings"
+        />
+
+        <button
+          className="hit fd"
+          disabled={running}
+          onClick={() => changeSite("fd")}
+          aria-label="FanDuel"
+        />
+
+        <div
+          className={
+            site === "dk"
+              ? "site-overlay site-dk"
+              : "site-overlay site-fd"
+          }
+        >
+          {siteName}
         </div>
 
-        <nav className="main-nav">
-          <button className="active">OPTIMIZER</button>
-          <button>LINEUPS</button>
-          <button>EXPOSURES</button>
-          <button>STACKS</button>
-          <button>PLAYER POOL</button>
-          <button>SETTINGS</button>
-        </nav>
+        {/* LINEUP COUNT */}
+        <input
+          className="lineup-slider"
+          type="range"
+          min="1"
+          max="50"
+          value={lineupCount}
+          disabled={running}
+          onChange={(event) =>
+            setLineupCount(
+              Number(event.target.value)
+            )
+          }
+        />
 
-        <div className="top-controls">
-          <button
-            className="sound-toggle"
-            onClick={() => setSoundEnabled(!soundEnabled)}
-          >
-            SOUND {soundEnabled ? "ON" : "OFF"}
-          </button>
-
-          <select defaultValue="NFL">
-            <option>NFL</option>
-          </select>
-
-          <select defaultValue="Week 3 - Main">
-            <option>Week 3 - Main</option>
-          </select>
+        <div className="lineup-value">
+          {lineupCount}
         </div>
-      </header>
 
-      <div className="workspace">
-        <aside className="sidebar">
-          <section className="panel">
-            <h2>SLATE & SITE</h2>
-
-            <div className="label">Site</div>
-
-            <div className="site-toggle">
-              <button
-                className={
-                  site === "DraftKings"
-                    ? "selected"
-                    : ""
-                }
-                onClick={() =>
-                  setSite("DraftKings")
-                }
-                disabled={isRunning}
-              >
-                DraftKings
-              </button>
-
-              <button
-                className={
-                  site === "FanDuel"
-                    ? "selected"
-                    : ""
-                }
-                onClick={() =>
-                  setSite("FanDuel")
-                }
-                disabled={isRunning}
-              >
-                FanDuel
-              </button>
-            </div>
-
-            <div className="control-row">
-              <span>Sport</span>
-              <strong>NFL</strong>
-            </div>
-
-            <div className="control-row">
-              <span>Slate</span>
-              <strong>Week 3 - Main</strong>
-            </div>
-          </section>
-
-          <section className="panel">
-            <h2>PORTFOLIO SETTINGS</h2>
-
-            <div className="slider-head">
-              <span>Number of Lineups</span>
-              <strong>{lineups}</strong>
-            </div>
-
-            <input
-              type="range"
-              min="1"
-              max="50"
-              value={lineups}
-              disabled={isRunning}
-              onChange={(event) =>
-                setLineups(
-                  Number(event.target.value)
-                )
-              }
-            />
-
-            <div className="slider-head">
-              <span>Stage 1 GPP Mix</span>
-              <strong>{gppMix}%</strong>
-            </div>
-
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={gppMix}
-              disabled={isRunning}
-              onChange={(event) =>
-                setGppMix(
-                  Number(event.target.value)
-                )
-              }
-            />
-          </section>
-
-          <section className="panel">
-            <h2>PLAYER CONTROLS</h2>
-
-            <div className="mini-tabs">
-              <button className="selected">
-                Locks (0)
-              </button>
-              <button>Excludes (0)</button>
-              <button>Exposures (0)</button>
-            </div>
-
-            <input
-              className="search"
-              placeholder="Search player by name or team..."
-            />
-
-            <div className="empty-box">
-              No active manual overrides
-            </div>
-          </section>
-
-          <section className="panel strategy-panel">
-            <h2>STRATEGY CONTROLS</h2>
-
-            <div className="strategy-row">
-              <span>Candidate GPP Mix</span>
-              <strong>{gppMix}%</strong>
-            </div>
-
-            <div className="strategy-row">
-              <span>Minimum Unique</span>
-              <strong>2</strong>
-            </div>
-
-            <div className="strategy-row">
-              <span>Candidate Pool</span>
-              <strong>60</strong>
-            </div>
-          </section>
-
-          <button
-            className={`ignite ${
-              isRunning ? "solving" : ""
-            }`}
-            disabled={isRunning}
-            onClick={igniteBurn1}
-          >
-            <span className="flame">▲</span>
-            {isRunning
-              ? "BURN1 SOLVING..."
-              : "IGNITE TWO-STAGE SOLVER"}
-          </button>
-        </aside>
-
-        <main className="main-area">
-          {runError && (
-            <div className="run-error">
-              {runError}
-            </div>
+        {/* IGNITE */}
+        <button
+          className="hit ignite"
+          disabled={running}
+          onClick={ignite}
+          aria-label="Ignite BURN1"
+        >
+          {running && (
+            <span>BURN1 SOLVING...</span>
           )}
+        </button>
 
-          <section className="solver-panel">
-            <div className="solver-title">
-              BURN1 TWO-STAGE PORTFOLIO ENGINE
+        {/* Replace sample telemetry with REAL telemetry */}
+        {(running || result) && (
+          <section className="telemetry">
+            <div>
+              <span>Candidates Generated</span>
+              <strong>
+                {result
+                  ? `${result.generated_candidates}`
+                  : "—"}
+              </strong>
             </div>
 
-            <div className="pipeline">
-              <div className={stageClass(0)}>
-                <div className="stage-node">
-                  {runStatus === "validating"
-                    ? "•"
-                    : "✓"}
-                </div>
-                <strong>VALIDATE</strong>
-                <span>Player pool ready</span>
-              </div>
-
-              <div className="pipeline-line"></div>
-
-              <div className={stageClass(1)}>
-                <div className="stage-node">1</div>
-                <strong>STAGE 1</strong>
-                <span>Generate candidates</span>
-              </div>
-
-              <div className="pipeline-line"></div>
-
-              <div className={stageClass(2)}>
-                <div className="stage-node">2</div>
-                <strong>STAGE 2</strong>
-                <span>Select portfolio</span>
-              </div>
-
-              <div className="pipeline-line"></div>
-
-              <div className={stageClass(3)}>
-                <div className="stage-node">3</div>
-                <strong>COMPLETE</strong>
-                <span>Portfolio output</span>
-              </div>
+            <div>
+              <span>Valid Lineups</span>
+              <strong>
+                {result
+                  ? `${result.generated_candidates}`
+                  : "—"}
+              </strong>
             </div>
 
-            <div className="arena">
-              <div className="field-visual">
-                <div className="node cyan n1">QB</div>
-                <div className="node cyan n2">WR</div>
-                <div className="node cyan n3">TE</div>
-                <div className="node orange n4">RB</div>
-                <div className="node orange n5">WR</div>
+            <div>
+              <span>Portfolio Selection</span>
+              <strong>
+                {running
+                  ? "In Progress..."
+                  : "Complete"}
+              </strong>
+            </div>
 
-                <div className="arc a1"></div>
-                <div className="arc a2"></div>
-                <div className="arc a3"></div>
-              </div>
+            <div>
+              <span>Solver</span>
+              <strong>CP-SAT (OR-Tools)</strong>
+            </div>
 
-              <div className="telemetry">
-                <div>
-                  <span>Site</span>
-                  <strong>{site}</strong>
-                </div>
+            <div>
+              <span>Status</span>
+              <strong className="orange">
+                {result?.solver_status ?? status}
+              </strong>
+            </div>
 
-                <div>
-                  <span>Final Lineups</span>
-                  <strong>{lineups}</strong>
-                </div>
+            <div>
+              <span>Final</span>
+              <strong>
+                {result
+                  ? `${result.generated_lineups}/${result.requested_lineups}`
+                  : `—/${lineupCount}`}
+              </strong>
+            </div>
+          </section>
+        )}
 
-                <div>
-                  <span>Candidate GPP Mix</span>
-                  <strong>{gppMix}%</strong>
-                </div>
+        {/* REAL SUMMARY */}
+        {result && (
+          <section className="summary">
+            <div>
+              <strong>
+                {result.generated_lineups}
+              </strong>
+              <span>Lineups</span>
+            </div>
 
-                <div>
-                  <span>Solver</span>
-                  <strong>CP-SAT</strong>
-                </div>
+            <div>
+              <strong>
+                {Number(
+                  result.total_projection
+                ).toFixed(2)}
+              </strong>
+              <span>Total Projection</span>
+            </div>
 
-                <div>
-                  <span>Backend</span>
+            <div>
+              <strong>
+                {(
+                  Number(result.total_projection) /
+                  Number(result.generated_lineups)
+                ).toFixed(2)}
+              </strong>
+              <span>Avg Projection</span>
+            </div>
+
+            <div>
+              <strong className="orange">
+                {result.solver_status}
+              </strong>
+              <span>Solver Status</span>
+            </div>
+          </section>
+        )}
+
+        {/* REAL TOP EXPOSURES */}
+        {result && (
+          <section className="top-exposures">
+            {topExposures.map((player) => {
+              const exposure =
+                Math.round(
+                  Number(player.exposure || 0) * 100
+                );
+
+              return (
+                <div
+                  className="exposure-row"
+                  key={player.player_id}
+                >
+                  <span>{player.name}</span>
+                  <span>{player.position}</span>
+                  <span>{player.team}</span>
+
+                  <div className="bar-track">
+                    <i
+                      style={{
+                        width: `${exposure}%`,
+                      }}
+                    />
+                  </div>
+
                   <strong>
-                    {backendStatus}
+                    {exposure}%
                   </strong>
                 </div>
+              );
+            })}
+          </section>
+        )}
 
-                <div>
-                  <span>Status</span>
-                  <strong className="orange-text">
-                    {runStatus.toUpperCase()}
-                  </strong>
-                </div>
+        {error && (
+          <div className="error-box">
+            {error}
+          </div>
+        )}
+
+        {running && message && (
+          <div className="run-box">
+            {message}
+          </div>
+        )}
+
+        {/* LINEUPS VIEW */}
+        {view === "lineups" && (
+          <section className="overlay-view">
+
+            <header>
+              <div>
+                <small>BURN1 DFS</small>
+                <h1>FINAL LINEUPS</h1>
               </div>
-            </div>
 
-            {runMessage && (
-              <div className="run-message">
-                {runMessage}
+              <div className="overlay-actions">
+                <button
+                  disabled={!result}
+                  onClick={exportCsv}
+                >
+                  EXPORT CSV
+                </button>
+
+                <button
+                  onClick={() =>
+                    setView("optimizer")
+                  }
+                >
+                  RETURN
+                </button>
+              </div>
+            </header>
+
+            {!result ? (
+              <div className="empty">
+                Run BURN1 first.
+              </div>
+            ) : (
+              <div className="lineup-grid">
+                {result.lineups.map((lineup) => (
+                  <article
+                    key={lineup.lineup_number}
+                  >
+                    <header>
+                      <strong>
+                        LINEUP {lineup.lineup_number}
+                      </strong>
+
+                      <span>
+                        $
+                        {Number(
+                          lineup.total_salary
+                        ).toLocaleString()}
+                        {" • "}
+                        {Number(
+                          lineup.total_projection
+                        ).toFixed(2)}
+                      </span>
+                    </header>
+
+                    {lineup.players.map(
+                      (player) => (
+                        <div
+                          className="player-row"
+                          key={
+                            `${lineup.lineup_number}-` +
+                            `${player.player_id}-` +
+                            `${player.roster_slot}`
+                          }
+                        >
+                          <strong>
+                            {player.roster_slot}
+                          </strong>
+
+                          <span>
+                            {player.name}
+                          </span>
+
+                          <span>
+                            {player.team} vs{" "}
+                            {player.opponent}
+                          </span>
+
+                          <span>
+                            $
+                            {Number(
+                              player.salary
+                            ).toLocaleString()}
+                          </span>
+
+                          <strong>
+                            {Number(
+                              player.projection
+                            ).toFixed(2)}
+                          </strong>
+                        </div>
+                      )
+                    )}
+                  </article>
+                ))}
               </div>
             )}
+
           </section>
+        )}
 
-          <section className="results-grid">
-            <div className="panel results-card">
-              <h2>PORTFOLIO SUMMARY</h2>
+        {/* EXPOSURES VIEW */}
+        {view === "exposures" && (
+          <section className="overlay-view">
 
-              <div className="metric-grid">
-                <div>
-                  <strong>{resultLineups}</strong>
-                  <span>Lineups</span>
-                </div>
-
-                <div>
-                  <strong>{totalProjection}</strong>
-                  <span>Total Projection</span>
-                </div>
-
-                <div>
-                  <strong>{averageProjection}</strong>
-                  <span>Avg Projection</span>
-                </div>
-
-                <div>
-                  <strong className="green">
-                    {solverStatus}
-                  </strong>
-                  <span>Solver Status</span>
-                </div>
+            <header>
+              <div>
+                <small>BURN1 DFS</small>
+                <h1>PLAYER EXPOSURES</h1>
               </div>
-            </div>
 
-            <div className="panel results-card">
-              <h2>LINEUP STRATEGY MIX</h2>
+              <button
+                onClick={() =>
+                  setView("optimizer")
+                }
+              >
+                RETURN
+              </button>
+            </header>
 
-              <div className="strategy-summary">
-                <div>
-                  <span>Stacked</span>
-                  <strong>
-                    {strategy.stacked?.count ?? "—"} /{" "}
-                    {resultLineups}
-                  </strong>
-                </div>
-
-                <div>
-                  <span>Unstacked</span>
-                  <strong>
-                    {strategy.unstacked?.count ?? "—"} /{" "}
-                    {resultLineups}
-                  </strong>
-                </div>
-
-                <div>
-                  <span>QB Stack 1+</span>
-                  <strong>
-                    {strategy.qb_stack_1_plus?.count ??
-                      "—"}{" "}
-                    / {resultLineups}
-                  </strong>
-                </div>
-
-                <div>
-                  <span>QB Stack 2+</span>
-                  <strong>
-                    {strategy.qb_stack_2_plus?.count ??
-                      "—"}{" "}
-                    / {resultLineups}
-                  </strong>
-                </div>
+            {!result ? (
+              <div className="empty">
+                Run BURN1 first.
               </div>
-            </div>
+            ) : (
+              <div className="exposure-list">
+                {result.exposures.map(
+                  (player) => {
+                    const exposure =
+                      Math.round(
+                        Number(
+                          player.exposure || 0
+                        ) * 100
+                      );
 
-            <div className="panel results-card">
-              <h2>TOP PLAYER EXPOSURES</h2>
+                    return (
+                      <div
+                        key={player.player_id}
+                      >
+                        <strong>
+                          {player.name}
+                        </strong>
 
-              <div className="exposure-table">
-                {exposures.length === 0 ? (
-                  <div className="empty-box">
-                    Ignite BURN1 to populate real exposures.
-                  </div>
-                ) : (
-                  exposures.map((player) => (
-                    <div
-                      className="exposure-row"
-                      key={player.player_id}
-                    >
-                      <span className="player-name">
-                        {player.name}
-                      </span>
-                      <span>{player.position}</span>
-                      <span>{player.team}</span>
-                      <strong>
-                        {Math.round(
-                          player.exposure * 100
-                        )}
-                        %
-                      </strong>
-                    </div>
-                  ))
+                        <span>
+                          {player.position}
+                        </span>
+
+                        <span>
+                          {player.team}
+                        </span>
+
+                        <div className="wide-track">
+                          <i
+                            style={{
+                              width:
+                                `${exposure}%`,
+                            }}
+                          />
+                        </div>
+
+                        <strong>
+                          {exposure}%
+                        </strong>
+                      </div>
+                    );
+                  }
                 )}
               </div>
-            </div>
+            )}
+
           </section>
-        </main>
+        )}
+
+        {/* STACKS VIEW */}
+        {view === "stacks" && (
+          <section className="overlay-view">
+
+            <header>
+              <div>
+                <small>BURN1 DFS</small>
+                <h1>STACKS</h1>
+              </div>
+
+              <button
+                onClick={() =>
+                  setView("optimizer")
+                }
+              >
+                RETURN
+              </button>
+            </header>
+
+            {!result ? (
+              <div className="empty">
+                Run BURN1 first.
+              </div>
+            ) : (
+              <div className="stack-list">
+                {Object.entries(
+                  result.strategy_summary ?? {}
+                ).map(([name, metrics]) => (
+                  <div key={name}>
+                    <span>
+                      {name
+                        .replaceAll("_", " ")
+                        .toUpperCase()}
+                    </span>
+
+                    <strong>
+                      {metrics.count}
+                    </strong>
+
+                    <strong>
+                      {Math.round(
+                        Number(
+                          metrics.exposure || 0
+                        ) * 100
+                      )}
+                      %
+                    </strong>
+                  </div>
+                ))}
+              </div>
+            )}
+
+          </section>
+        )}
+
       </div>
     </div>
   );
