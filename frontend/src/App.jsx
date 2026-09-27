@@ -1,19 +1,21 @@
-﻿import { useEffect, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import "./App.css";
-
-const mockExposures = [
-  ["Patrick Mahomes", "QB", "KC", "60%"],
-  ["Christian McCaffrey", "RB", "SF", "55%"],
-  ["Derrick Henry", "RB", "BAL", "50%"],
-  ["Adonai Mitchell", "WR", "NYJ", "45%"],
-  ["George Kittle", "TE", "SF", "35%"],
-];
 
 function App() {
   const [site, setSite] = useState("DraftKings");
   const [lineups, setLineups] = useState(20);
   const [gppMix, setGppMix] = useState(50);
+
   const [backendStatus, setBackendStatus] = useState("CONNECTING");
+  const [runStatus, setRunStatus] = useState("ready");
+  const [runMessage, setRunMessage] = useState("");
+  const [runResult, setRunResult] = useState(null);
+  const [runError, setRunError] = useState("");
+  const [isRunning, setIsRunning] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  const audioContextRef = useRef(null);
+  const previousStatusRef = useRef("");
 
   useEffect(() => {
     fetch("http://127.0.0.1:8000/api/health")
@@ -36,6 +38,206 @@ function App() {
       });
   }, []);
 
+  function playTone(frequency, duration, type = "sine", volume = 0.04) {
+    if (!soundEnabled) {
+      return;
+    }
+
+    const AudioContext =
+      window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContext) {
+      return;
+    }
+
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContext();
+    }
+
+    const context = audioContextRef.current;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+
+    oscillator.type = type;
+    oscillator.frequency.value = frequency;
+
+    gain.gain.setValueAtTime(volume, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      context.currentTime + duration
+    );
+
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+
+    oscillator.start();
+    oscillator.stop(context.currentTime + duration);
+  }
+
+  function playStatusSound(status) {
+    if (status === previousStatusRef.current) {
+      return;
+    }
+
+    previousStatusRef.current = status;
+
+    if (status === "validating") {
+      playTone(260, 0.12, "sine");
+    } else if (status === "stage1_generating") {
+      playTone(360, 0.18, "triangle");
+    } else if (status === "stage2_optimizing") {
+      playTone(470, 0.22, "triangle");
+    } else if (status === "complete") {
+      playTone(620, 0.18, "sine");
+      setTimeout(() => {
+        playTone(820, 0.28, "sine");
+      }, 120);
+    } else if (status === "error") {
+      playTone(145, 0.35, "sawtooth", 0.03);
+    }
+  }
+
+  async function igniteBurn1() {
+    if (isRunning) {
+      return;
+    }
+
+    setIsRunning(true);
+    setRunResult(null);
+    setRunError("");
+    setRunMessage("Starting BURN1...");
+    setRunStatus("queued");
+    previousStatusRef.current = "";
+
+    playTone(180, 0.12, "sawtooth", 0.035);
+
+    try {
+      const startResponse = await fetch(
+        "http://127.0.0.1:8000/api/runs",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            site: site === "DraftKings" ? "dk" : "fd",
+            lineup_count: lineups,
+            candidate_count: 60,
+            min_unique_players: 2,
+            candidate_gpp_fraction: gppMix / 100,
+          }),
+        }
+      );
+
+      if (!startResponse.ok) {
+        throw new Error(
+          `BURN1 API returned ${startResponse.status}`
+        );
+      }
+
+      const startedJob = await startResponse.json();
+      const jobId = startedJob.job_id;
+
+      while (true) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, 750)
+        );
+
+        const statusResponse = await fetch(
+          `http://127.0.0.1:8000/api/runs/${jobId}`
+        );
+
+        if (!statusResponse.ok) {
+          throw new Error(
+            "Could not retrieve BURN1 run status."
+          );
+        }
+
+        const job = await statusResponse.json();
+
+        setRunStatus(job.status);
+        setRunMessage(job.message || "");
+        playStatusSound(job.status);
+
+        if (job.status === "complete") {
+          setRunResult(job.result);
+          setIsRunning(false);
+          break;
+        }
+
+        if (job.status === "error") {
+          setRunError(
+            job.error?.message ||
+              job.message ||
+              "BURN1 run failed."
+          );
+          setIsRunning(false);
+          break;
+        }
+      }
+    } catch (error) {
+      setRunStatus("error");
+      setRunError(error.message);
+      setRunMessage("BURN1 run failed.");
+      setIsRunning(false);
+      playStatusSound("error");
+    }
+  }
+
+  function stageClass(stage) {
+    const statusOrder = {
+      ready: 0,
+      queued: 0,
+      validating: 0,
+      stage1_generating: 1,
+      stage2_optimizing: 2,
+      complete: 3,
+      error: -1,
+    };
+
+    const current = statusOrder[runStatus] ?? 0;
+
+    if (runStatus === "complete") {
+      return "stage complete";
+    }
+
+    if (current > stage) {
+      return "stage complete";
+    }
+
+    if (current === stage) {
+      return "stage active";
+    }
+
+    return "stage";
+  }
+
+  const resultLineups =
+    runResult?.generated_lineups ?? "—";
+
+  const totalProjection =
+    runResult?.total_projection != null
+      ? Number(runResult.total_projection).toFixed(2)
+      : "—";
+
+  const averageProjection =
+    runResult?.total_projection != null &&
+    runResult?.generated_lineups
+      ? (
+          runResult.total_projection /
+          runResult.generated_lineups
+        ).toFixed(2)
+      : "—";
+
+  const solverStatus =
+    runResult?.solver_status ?? "—";
+
+  const exposures =
+    runResult?.exposures?.slice(0, 5) ?? [];
+
+  const strategy =
+    runResult?.strategy_summary ?? {};
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -56,9 +258,17 @@ function App() {
         </nav>
 
         <div className="top-controls">
+          <button
+            className="sound-toggle"
+            onClick={() => setSoundEnabled(!soundEnabled)}
+          >
+            SOUND {soundEnabled ? "ON" : "OFF"}
+          </button>
+
           <select defaultValue="NFL">
             <option>NFL</option>
           </select>
+
           <select defaultValue="Week 3 - Main">
             <option>Week 3 - Main</option>
           </select>
@@ -71,17 +281,32 @@ function App() {
             <h2>SLATE & SITE</h2>
 
             <div className="label">Site</div>
+
             <div className="site-toggle">
               <button
-                className={site === "DraftKings" ? "selected" : ""}
-                onClick={() => setSite("DraftKings")}
+                className={
+                  site === "DraftKings"
+                    ? "selected"
+                    : ""
+                }
+                onClick={() =>
+                  setSite("DraftKings")
+                }
+                disabled={isRunning}
               >
                 DraftKings
               </button>
 
               <button
-                className={site === "FanDuel" ? "selected" : ""}
-                onClick={() => setSite("FanDuel")}
+                className={
+                  site === "FanDuel"
+                    ? "selected"
+                    : ""
+                }
+                onClick={() =>
+                  setSite("FanDuel")
+                }
+                disabled={isRunning}
               >
                 FanDuel
               </button>
@@ -109,9 +334,14 @@ function App() {
             <input
               type="range"
               min="1"
-              max="150"
+              max="50"
               value={lineups}
-              onChange={(e) => setLineups(Number(e.target.value))}
+              disabled={isRunning}
+              onChange={(event) =>
+                setLineups(
+                  Number(event.target.value)
+                )
+              }
             />
 
             <div className="slider-head">
@@ -124,7 +354,12 @@ function App() {
               min="0"
               max="100"
               value={gppMix}
-              onChange={(e) => setGppMix(Number(e.target.value))}
+              disabled={isRunning}
+              onChange={(event) =>
+                setGppMix(
+                  Number(event.target.value)
+                )
+              }
             />
           </section>
 
@@ -132,7 +367,9 @@ function App() {
             <h2>PLAYER CONTROLS</h2>
 
             <div className="mini-tabs">
-              <button className="selected">Locks (0)</button>
+              <button className="selected">
+                Locks (0)
+              </button>
               <button>Excludes (0)</button>
               <button>Exposures (0)</button>
             </div>
@@ -151,53 +388,61 @@ function App() {
             <h2>STRATEGY CONTROLS</h2>
 
             <div className="strategy-row">
-              <span>Stacked</span>
-              <strong>50%</strong>
+              <span>Candidate GPP Mix</span>
+              <strong>{gppMix}%</strong>
             </div>
 
             <div className="strategy-row">
-              <span>Unstacked</span>
-              <strong>50%</strong>
+              <span>Minimum Unique</span>
+              <strong>2</strong>
             </div>
 
             <div className="strategy-row">
-              <span>QB Stack (1+)</span>
-              <strong>50%</strong>
-            </div>
-
-            <div className="strategy-row">
-              <span>Bring Back (1+)</span>
-              <strong>0%</strong>
-            </div>
-
-            <div className="strategy-row">
-              <span>RB + DST</span>
-              <strong>0%</strong>
+              <span>Candidate Pool</span>
+              <strong>60</strong>
             </div>
           </section>
 
-          <button className="ignite">
+          <button
+            className={`ignite ${
+              isRunning ? "solving" : ""
+            }`}
+            disabled={isRunning}
+            onClick={igniteBurn1}
+          >
             <span className="flame">▲</span>
-            IGNITE TWO-STAGE SOLVER
+            {isRunning
+              ? "BURN1 SOLVING..."
+              : "IGNITE TWO-STAGE SOLVER"}
           </button>
         </aside>
 
         <main className="main-area">
+          {runError && (
+            <div className="run-error">
+              {runError}
+            </div>
+          )}
+
           <section className="solver-panel">
             <div className="solver-title">
               BURN1 TWO-STAGE PORTFOLIO ENGINE
             </div>
 
             <div className="pipeline">
-              <div className="stage complete">
-                <div className="stage-node">✓</div>
+              <div className={stageClass(0)}>
+                <div className="stage-node">
+                  {runStatus === "validating"
+                    ? "•"
+                    : "✓"}
+                </div>
                 <strong>VALIDATE</strong>
                 <span>Player pool ready</span>
               </div>
 
               <div className="pipeline-line"></div>
 
-              <div className="stage active">
+              <div className={stageClass(1)}>
                 <div className="stage-node">1</div>
                 <strong>STAGE 1</strong>
                 <span>Generate candidates</span>
@@ -205,7 +450,7 @@ function App() {
 
               <div className="pipeline-line"></div>
 
-              <div className="stage">
+              <div className={stageClass(2)}>
                 <div className="stage-node">2</div>
                 <strong>STAGE 2</strong>
                 <span>Select portfolio</span>
@@ -213,7 +458,7 @@ function App() {
 
               <div className="pipeline-line"></div>
 
-              <div className="stage">
+              <div className={stageClass(3)}>
                 <div className="stage-node">3</div>
                 <strong>COMPLETE</strong>
                 <span>Portfolio output</span>
@@ -255,11 +500,26 @@ function App() {
                 </div>
 
                 <div>
+                  <span>Backend</span>
+                  <strong>
+                    {backendStatus}
+                  </strong>
+                </div>
+
+                <div>
                   <span>Status</span>
-                  <strong className="orange-text">{backendStatus}</strong>
+                  <strong className="orange-text">
+                    {runStatus.toUpperCase()}
+                  </strong>
                 </div>
               </div>
             </div>
+
+            {runMessage && (
+              <div className="run-message">
+                {runMessage}
+              </div>
+            )}
           </section>
 
           <section className="results-grid">
@@ -268,33 +528,26 @@ function App() {
 
               <div className="metric-grid">
                 <div>
-                  <strong>{lineups}</strong>
+                  <strong>{resultLineups}</strong>
                   <span>Lineups</span>
                 </div>
 
                 <div>
-                  <strong>3065.72</strong>
+                  <strong>{totalProjection}</strong>
                   <span>Total Projection</span>
                 </div>
 
                 <div>
-                  <strong>153.29</strong>
+                  <strong>{averageProjection}</strong>
                   <span>Avg Projection</span>
                 </div>
 
                 <div>
-                  <strong className="green">OPTIMAL</strong>
+                  <strong className="green">
+                    {solverStatus}
+                  </strong>
                   <span>Solver Status</span>
                 </div>
-              </div>
-
-              <div className="chart-placeholder">
-                <div style={{ height: "65%" }}>QB</div>
-                <div style={{ height: "75%" }}>RB</div>
-                <div style={{ height: "90%" }}>WR</div>
-                <div style={{ height: "55%" }}>TE</div>
-                <div style={{ height: "70%" }}>FLEX</div>
-                <div style={{ height: "45%" }}>DST</div>
               </div>
             </div>
 
@@ -304,19 +557,36 @@ function App() {
               <div className="strategy-summary">
                 <div>
                   <span>Stacked</span>
-                  <strong>10 / 20</strong>
+                  <strong>
+                    {strategy.stacked?.count ?? "—"} /{" "}
+                    {resultLineups}
+                  </strong>
                 </div>
+
                 <div>
                   <span>Unstacked</span>
-                  <strong>10 / 20</strong>
+                  <strong>
+                    {strategy.unstacked?.count ?? "—"} /{" "}
+                    {resultLineups}
+                  </strong>
                 </div>
+
                 <div>
                   <span>QB Stack 1+</span>
-                  <strong>10 / 20</strong>
+                  <strong>
+                    {strategy.qb_stack_1_plus?.count ??
+                      "—"}{" "}
+                    / {resultLineups}
+                  </strong>
                 </div>
+
                 <div>
                   <span>QB Stack 2+</span>
-                  <strong>1 / 20</strong>
+                  <strong>
+                    {strategy.qb_stack_2_plus?.count ??
+                      "—"}{" "}
+                    / {resultLineups}
+                  </strong>
                 </div>
               </div>
             </div>
@@ -325,14 +595,30 @@ function App() {
               <h2>TOP PLAYER EXPOSURES</h2>
 
               <div className="exposure-table">
-                {mockExposures.map(([name, pos, team, exposure]) => (
-                  <div className="exposure-row" key={name}>
-                    <span className="player-name">{name}</span>
-                    <span>{pos}</span>
-                    <span>{team}</span>
-                    <strong>{exposure}</strong>
+                {exposures.length === 0 ? (
+                  <div className="empty-box">
+                    Ignite BURN1 to populate real exposures.
                   </div>
-                ))}
+                ) : (
+                  exposures.map((player) => (
+                    <div
+                      className="exposure-row"
+                      key={player.player_id}
+                    >
+                      <span className="player-name">
+                        {player.name}
+                      </span>
+                      <span>{player.position}</span>
+                      <span>{player.team}</span>
+                      <strong>
+                        {Math.round(
+                          player.exposure * 100
+                        )}
+                        %
+                      </strong>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </section>
@@ -343,4 +629,3 @@ function App() {
 }
 
 export default App;
-
