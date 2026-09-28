@@ -38,6 +38,7 @@ class Burn1PortfolioConfig:
     candidate_count: int = 200
     min_unique_players: int = 2
     candidate_gpp_fraction: float | None = None
+    candidate_max_player_exposure: float | None = None
 
     gpp_mode: bool = False
     qb_stack_min: int = 1
@@ -168,6 +169,17 @@ def _validate_config(config):
     ):
         raise ValueError(
             "candidate_gpp_fraction must be between 0.0 and 1.0."
+        )
+
+    if (
+        config.candidate_max_player_exposure is not None
+        and not 0.0
+        < config.candidate_max_player_exposure
+        <= 1.0
+    ):
+        raise ValueError(
+            "candidate_max_player_exposure must be "
+            "greater than 0.0 and at most 1.0."
         )
 
     if config.qb_stack_min < 0:
@@ -456,6 +468,9 @@ def run_burn1_nfl_portfolio(
         rb_dst_stack=config.rb_dst_stack,
         candidate_gpp_fraction=(
             config.candidate_gpp_fraction
+        ),
+        candidate_max_player_exposure=(
+            config.candidate_max_player_exposure
         ),
         progress_callback=(
             candidate_progress_callback

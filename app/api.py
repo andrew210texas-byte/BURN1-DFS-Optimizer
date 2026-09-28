@@ -56,6 +56,12 @@ class Burn1RunRequest(BaseModel):
         le=1.0,
     )
 
+    candidate_max_player_exposure: float | None = Field(
+        default=None,
+        gt=0.0,
+        le=1.0,
+    )
+
     qb_stack_min: int = Field(default=1, ge=0, le=4)
     bring_back_min: int = Field(default=0, ge=0, le=4)
     rb_dst_stack: bool = False
@@ -238,10 +244,24 @@ def run_job(
             previous_status = event.status
             previous_status_started = now
 
+            progress_current = getattr(
+                event,
+                "progress_current",
+                None,
+            )
+
+            progress_total = getattr(
+                event,
+                "progress_total",
+                None,
+            )
+
             update_job(
                 job_id,
                 status=event.status,
                 message=event.message,
+                progress_current=progress_current,
+                progress_total=progress_total,
                 elapsed_seconds=round(
                     now - started,
                     3,
@@ -258,6 +278,9 @@ def run_job(
             ),
             candidate_gpp_fraction=(
                 request.candidate_gpp_fraction
+            ),
+            candidate_max_player_exposure=(
+                request.candidate_max_player_exposure
             ),
             qb_stack_min=request.qb_stack_min,
             bring_back_min=request.bring_back_min,
@@ -411,6 +434,8 @@ def start_run(request: Burn1RunRequest):
             "job_id": job_id,
             "status": "queued",
             "message": "BURN1 run queued.",
+            "progress_current": 0,
+            "progress_total": request.candidate_count,
             "result": None,
             "error": None,
             "elapsed_seconds": 0.0,

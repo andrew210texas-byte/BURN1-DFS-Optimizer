@@ -297,6 +297,7 @@ def generate_nfl_candidates(
     bring_back_min=0,
     rb_dst_stack=False,
     candidate_gpp_fraction=None,
+    candidate_max_player_exposure=None,
     candidate_solver_time_limit_seconds=1.0,
     candidate_solver_relative_gap_limit=0.001,
     progress_callback=None,
@@ -320,6 +321,15 @@ def generate_nfl_candidates(
         )
 
     if (
+        candidate_max_player_exposure is not None
+        and not 0.0 < candidate_max_player_exposure <= 1.0
+    ):
+        raise ValueError(
+            "candidate_max_player_exposure must be "
+            "greater than 0.0 and at most 1.0."
+        )
+
+    if (
         candidate_solver_time_limit_seconds is not None
         and candidate_solver_time_limit_seconds <= 0
     ):
@@ -338,6 +348,22 @@ def generate_nfl_candidates(
     lineups = []
     profiles = []
     excluded_lineups = []
+
+    player_candidate_counts = {}
+
+    if candidate_max_player_exposure is None:
+        max_candidate_appearances = None
+    else:
+        max_candidate_appearances = max(
+            1,
+            int(
+                math.floor(
+                    candidate_count
+                    * candidate_max_player_exposure
+                    + 1e-9
+                )
+            ),
+        )
 
     if candidate_gpp_fraction is None:
         candidate_gpp_flags = [
@@ -402,8 +428,25 @@ def generate_nfl_candidates(
             ]
         )
 
+        if max_candidate_appearances is None:
+            candidate_players = players
+        else:
+            capped_player_ids = {
+                player_id
+                for player_id, count
+                in player_candidate_counts.items()
+                if count >= max_candidate_appearances
+            }
+
+            candidate_players = [
+                player
+                for player in players
+                if player.player_id
+                not in capped_player_ids
+            ]
+
         lineup = optimize_nfl_lineup(
-            players,
+            candidate_players,
             salary_cap=salary_cap,
             gpp_mode=candidate_uses_gpp,
             qb_stack_min=qb_stack_min,
@@ -434,6 +477,15 @@ def generate_nfl_candidates(
 
         lineups.append(lineup)
         excluded_lineups.append(player_ids)
+
+        for player_id in set(player_ids):
+            player_candidate_counts[player_id] = (
+                player_candidate_counts.get(
+                    player_id,
+                    0,
+                )
+                + 1
+            )
 
         profiles.append(
             _profile_lineup(
