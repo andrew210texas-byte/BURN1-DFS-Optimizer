@@ -2,6 +2,11 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Callable
 
 from models.player import Player
+from app.prelock_validation import (
+    PreLockValidationError,
+    validate_final_lineups,
+    validate_player_pool,
+)
 from optimizer.portfolio_optimizer import (
     Stage2InfeasibleError,
     generate_nfl_candidates,
@@ -425,6 +430,23 @@ def run_burn1_nfl_portfolio(
 
     salary_cap = SUPPORTED_SITES[config.site]
 
+    try:
+        validate_player_pool(
+            players,
+            site=config.site,
+            salary_cap=salary_cap,
+            locked_player_ids=config.locked_player_ids,
+            excluded_player_ids=config.excluded_player_ids,
+            min_player_exposures=config.min_player_exposures,
+            max_player_exposures=config.max_player_exposures,
+        )
+    except PreLockValidationError as exc:
+        raise Burn1ApplicationError(
+            code="PRELOCK_VALIDATION_FAILED",
+            stage=STATUS_VALIDATING,
+            message=str(exc),
+        ) from exc
+
     _emit_status(
         status_callback,
         STATUS_STAGE1,
@@ -553,6 +575,20 @@ def run_burn1_nfl_portfolio(
         )
 
         lineups.append(serialized_lineup)
+
+    try:
+        validate_final_lineups(
+            lineups,
+            site=config.site,
+            salary_cap=salary_cap,
+            expected_lineup_count=config.lineup_count,
+        )
+    except PreLockValidationError as exc:
+        raise Burn1ApplicationError(
+            code="FINAL_LINEUP_VALIDATION_FAILED",
+            stage=STATUS_STAGE2,
+            message=str(exc),
+        ) from exc
 
     result = Burn1RunResult(
         status=STATUS_COMPLETE,
