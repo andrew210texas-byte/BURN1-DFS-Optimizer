@@ -996,79 +996,305 @@ playTone(610);
   return (
     <div className="burn1-root">
       <div className={`master status-${runStatus}`}>
-        <img className="master-image" src="/BURN1_UI_clean.png" alt="BURN1 DFS Optimizer" />
+        <img className="master-image" src="/BURN1_UI_clean.png?v=20260927_195856" alt="BURN1 DFS Optimizer" />
 
-        {/* BURN1 CLEAN LIVE MONITORS START */}
-        {view === "optimizer" && running && (
-          <>
-            <section
-              className={`burn1-live-monitor burn1-live-monitor-left status-${runStatus}`}
-              aria-live="polite"
-            >
-              <span className="burn1-monitor-kicker">
-                {runStatus === "stage2_optimizing"
-                  ? "SELECTING PORTFOLIO"
-                  : runStatus === "validating"
-                    ? "VALIDATING"
-                    : "GENERATING CANDIDATES"}
-              </span>
+        {/* BURN1 PROFESSIONAL JUMBOTRON START */}
+        {view === "optimizer" && (
+          <div
+            className={`burn1-pro-jumbo status-${runStatus}`}
+            aria-live="polite"
+          >
 
-              <strong className="burn1-monitor-number">
-                {runStatus === "stage2_optimizing"
-                  ? `${lineupCount} LINEUPS`
-                  : runStatus === "validating"
-                    ? "PRE-FLIGHT"
-                    : `${candidateProgress.current || 0} / ${candidateProgress.total || candidateCount}`}
+            {/* LEFT ? SYSTEM MONITOR */}
+            <section className="burn1-pro-system">
+              <strong className="pro-screen-title">
+                SYSTEM READY
               </strong>
 
-              <div className="burn1-monitor-progress">
-                <i />
+              <span className="pro-screen-subtitle">
+                {runStatus === "stage1_generating"
+                  ? "GENERATING CANDIDATES"
+                  : runStatus === "stage2_optimizing" ||
+                    runStatus === "complete"
+                    ? "CANDIDATES GENERATED"
+                    : "CANDIDATE ENGINE READY"}
+              </span>
+
+              <div className="pro-candidate-row">
+                <svg
+                  className="pro-users-icon"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+                </svg>
+
+                <strong className="pro-candidate-count">
+                  {runStatus === "stage1_generating"
+                    ? `${candidateProgress.current || 0} / ${candidateProgress.total || candidateCount}`
+                    : runStatus === "stage2_optimizing" ||
+                      runStatus === "complete"
+                      ? `${candidateProgress.total || result?.generated_candidates || candidateCount} / ${candidateProgress.total || result?.generated_candidates || candidateCount}`
+                      : `${candidateCount} / ${candidateCount}`}
+                </strong>
+              </div>
+
+              <div className="pro-segmented-bar">
+                {[...Array(8)].map((_, i) => (
+                  <span
+                    key={i}
+                    className={`bar-seg ${
+                      runStatus === "complete" ||
+                      runStatus === "stage2_optimizing" ||
+                      (
+                        runStatus === "stage1_generating" &&
+                        (i / 8) <= (
+                          (candidateProgress.current || 0) /
+                          Math.max(
+                            1,
+                            candidateProgress.total || candidateCount
+                          )
+                        )
+                      )
+                        ? "active"
+                        : ""
+                    }`}
+                  />
+                ))}
               </div>
             </section>
 
-            <section
-              className={`burn1-live-monitor burn1-live-monitor-right status-${runStatus}`}
-              aria-live="polite"
-            >
-              <strong className="burn1-monitor-stage">
-                {runStatus === "stage2_optimizing"
-                  ? "STAGE 2 OF 3"
-                  : runStatus === "validating"
-                    ? "PRE-FLIGHT"
-                    : "STAGE 1 OF 3"}
+
+            {/* CENTER ? PROCESS MONITOR */}
+            <section className="burn1-pro-process">
+              <div className="pro-process-track">
+
+                <div
+                  className={`pro-process-step step-1 ${
+                    runStatus === "stage1_generating"
+                      ? "active"
+                      : runStatus === "stage2_optimizing" ||
+                        runStatus === "complete"
+                        ? "done"
+                        : ""
+                  }`}
+                >
+                  <div className="step-circle">
+                    {runStatus === "stage2_optimizing" ||
+                    runStatus === "complete" ? (
+                      <svg
+                        className="step-check"
+                        viewBox="0 0 16 16"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path d="M13.485 3.515a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-3-3a1 1 0 011.414-1.414L6 10.086l6.293-6.293a1 1 0 011.414 0z" />
+                      </svg>
+                    ) : (
+                      <span>1</span>
+                    )}
+                  </div>
+
+                  <span>
+                    CANDIDATES
+                    <br />
+                    GENERATED
+                  </span>
+                </div>
+
+                <div
+                  className={`pro-process-line line-1 ${
+                    runStatus === "stage2_optimizing" ||
+                    runStatus === "complete"
+                      ? "active"
+                      : ""
+                  }`}
+                />
+
+
+                <div
+                  className={`pro-process-step step-2 ${
+                    runStatus === "stage2_optimizing"
+                      ? "active"
+                      : runStatus === "complete"
+                        ? "done"
+                        : ""
+                  }`}
+                >
+                  <div className="step-circle">
+                    {runStatus === "complete" ? (
+                      <svg
+                        className="step-check"
+                        viewBox="0 0 16 16"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path d="M13.485 3.515a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-3-3a1 1 0 011.414-1.414L6 10.086l6.293-6.293a1 1 0 011.414 0z" />
+                      </svg>
+                    ) : (
+                      <span>2</span>
+                    )}
+                  </div>
+
+                  <span>
+                    OPTIMIZATION
+                    <br />
+                    COMPLETE
+                  </span>
+                </div>
+
+                <div
+                  className={`pro-process-line line-2 ${
+                    runStatus === "complete"
+                      ? "active"
+                      : ""
+                  }`}
+                />
+
+
+                <div
+                  className={`pro-process-step step-3 ${
+                    runStatus === "complete"
+                      ? "complete"
+                      : ""
+                  }`}
+                >
+                  <div className="step-circle">
+                    {runStatus === "complete" ? (
+                      <svg
+                        className="step-check"
+                        viewBox="0 0 16 16"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path d="M13.485 3.515a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-3-3a1 1 0 011.414-1.414L6 10.086l6.293-6.293a1 1 0 011.414 0z" />
+                      </svg>
+                    ) : (
+                      <span>3</span>
+                    )}
+                  </div>
+
+                  <span>
+                    LINEUPS
+                    <br />
+                    CREATED
+                  </span>
+                </div>
+
+              </div>
+            </section>
+
+
+            {/* RIGHT ? ENGINE MONITOR */}
+            <section className="burn1-pro-engine">
+
+              <strong className="pro-engine-title">
+                ENGINE READY
               </strong>
 
-              <div className="burn1-monitor-check good">
-                <b>?</b>
+              <div className="pro-engine-row ready">
+                <span className="check-pip ready">?</span>
+                <span>API READY</span>
+              </div>
+
+              <div className="pro-engine-row ready">
+                <span className="check-pip ready">?</span>
                 <span>PLAYER POOL READY</span>
               </div>
 
-              <div className="burn1-monitor-check active">
-                <b>?</b>
+              <div
+                className={`pro-engine-row ${
+                  runStatus === "stage1_generating"
+                    ? "active"
+                    : runStatus === "stage2_optimizing" ||
+                      runStatus === "complete"
+                      ? "ready"
+                      : ""
+                }`}
+              >
+                <span
+                  className={`check-pip ${
+                    runStatus === "stage1_generating"
+                      ? "active"
+                      : runStatus === "stage2_optimizing" ||
+                        runStatus === "complete"
+                        ? "ready"
+                        : "pending"
+                  }`}
+                >
+                  {runStatus === "stage2_optimizing" ||
+                  runStatus === "complete"
+                    ? "?"
+                    : "?"}
+                </span>
+
                 <span>
-                  {runStatus === "stage2_optimizing"
-                    ? "SELECTING PORTFOLIO"
-                    : "BUILDING CANDIDATES"}
+                  {candidateProgress.total ||
+                    result?.generated_candidates ||
+                    candidateCount} CANDIDATES
                 </span>
               </div>
 
-              <div className="burn1-monitor-check">
-                <b>?</b>
-                <span>
-                  {runStatus === "stage1_generating"
-                    ? `${candidateProgress.current || 0}/${candidateProgress.total || candidateCount}`
-                    : `${lineupCount} FINAL LINEUPS`}
+              <div
+                className={`pro-engine-row ${
+                  runStatus === "stage2_optimizing"
+                    ? "active"
+                    : runStatus === "complete"
+                      ? "ready"
+                      : ""
+                }`}
+              >
+                <span
+                  className={`check-pip ${
+                    runStatus === "stage2_optimizing"
+                      ? "active"
+                      : runStatus === "complete"
+                        ? "ready"
+                        : "pending"
+                  }`}
+                >
+                  {runStatus === "complete"
+                    ? "?"
+                    : "?"}
                 </span>
+
+                <span>FINALIZING</span>
               </div>
 
-              <div className="burn1-monitor-check">
-                <b>?</b>
-                <span>TARGET {lineupCount} LINEUPS</span>
+              <div
+                className={`pro-engine-row optimized ${
+                  runStatus === "complete"
+                    ? "completed"
+                    : ""
+                }`}
+              >
+                <span
+                  className={`check-pip ${
+                    runStatus === "complete"
+                      ? "completed"
+                      : "pending"
+                  }`}
+                >
+                  {runStatus === "complete"
+                    ? "?"
+                    : "?"}
+                </span>
+
+                <span>LINEUPS OPTIMIZED</span>
               </div>
+
             </section>
-          </>
+
+          </div>
         )}
-        {/* BURN1 CLEAN LIVE MONITORS END */}
+        {/* BURN1 PROFESSIONAL JUMBOTRON END */}
+
+
+        
+
+        
+
 
 
         <div className={`connection-orb ${backendStatus.toLowerCase()}`} title={backendDetail} />
@@ -1584,7 +1810,7 @@ playTone(610);
             {running && (
               <svg
                 className={`burn1-route-field status-${runStatus}`}
-                viewBox="0 0 1000 340"
+                viewBox="0 0 1983 793"
                 preserveAspectRatio="none"
                 aria-hidden="true"
               >
@@ -1625,30 +1851,41 @@ playTone(610);
                 </defs>
 
                 <g className="burn1-blue-routes">
+
+                  {/* QB -> RB */}
                   <path
                     id="burn1-blue-route-1"
                     className="burn1-route blue"
-                    d="M55 260 C180 220 230 90 475 155"
+                    d="M575 454 C630 452 684 448 738 445"
                   />
 
+                  {/* QB -> WR1 */}
                   <path
                     id="burn1-blue-route-2"
                     className="burn1-route blue"
-                    d="M85 170 C210 120 285 245 480 175"
+                    d="M575 454 C646 424 710 357 790 364"
                   />
 
+                  {/* QB -> TE */}
                   <path
                     id="burn1-blue-route-3"
                     className="burn1-route blue"
-                    d="M145 300 C260 275 310 200 480 195"
+                    d="M575 454 C675 440 775 430 886 437"
+                  />
+
+                  {/* QB -> WR2 */}
+                  <path
+                    id="burn1-blue-route-4"
+                    className="burn1-route blue"
+                    d="M575 454 C700 413 855 383 1009 388"
                   />
 
                   <circle
                     className="burn1-tracker blue"
-                    r="8"
+                    r="7"
                   >
                     <animateMotion
-                      dur="1.45s"
+                      dur="1.35s"
                       repeatCount="indefinite"
                     >
                       <mpath href="#burn1-blue-route-1" />
@@ -1660,7 +1897,7 @@ playTone(610);
                     r="6"
                   >
                     <animateMotion
-                      dur="1.9s"
+                      dur="1.60s"
                       repeatCount="indefinite"
                     >
                       <mpath href="#burn1-blue-route-2" />
@@ -1669,39 +1906,63 @@ playTone(610);
 
                   <circle
                     className="burn1-tracker blue tertiary"
-                    r="5"
+                    r="6"
                   >
                     <animateMotion
-                      dur="2.25s"
+                      dur="1.82s"
                       repeatCount="indefinite"
                     >
                       <mpath href="#burn1-blue-route-3" />
                     </animateMotion>
                   </circle>
+
+                  <circle
+                    className="burn1-tracker blue quaternary"
+                    r="6"
+                  >
+                    <animateMotion
+                      dur="2.02s"
+                      repeatCount="indefinite"
+                    >
+                      <mpath href="#burn1-blue-route-4" />
+                    </animateMotion>
+                  </circle>
+
                 </g>
 
                 <g className="burn1-orange-routes">
+
+                  {/* QB -> RB */}
                   <path
                     id="burn1-orange-route-1"
                     className="burn1-route orange"
-                    d="M525 165 C680 80 785 105 955 195"
+                    d="M1643 454 C1575 451 1513 448 1451 445"
                   />
 
+                  {/* QB -> WR1 */}
                   <path
                     id="burn1-orange-route-2"
                     className="burn1-route orange"
-                    d="M520 185 C675 260 790 260 945 130"
+                    d="M1643 454 C1572 420 1505 358 1431 364"
                   />
 
+                  {/* QB -> TE */}
                   <path
                     id="burn1-orange-route-3"
                     className="burn1-route orange"
-                    d="M520 205 C655 305 815 290 945 245"
+                    d="M1643 454 C1540 440 1420 431 1303 445"
+                  />
+
+                  {/* QB -> WR2 */}
+                  <path
+                    id="burn1-orange-route-4"
+                    className="burn1-route orange"
+                    d="M1643 454 C1488 418 1300 400 1139 409"
                   />
 
                   <circle
                     className="burn1-tracker orange"
-                    r="8"
+                    r="7"
                   >
                     <animateMotion
                       dur="1.35s"
@@ -1716,7 +1977,7 @@ playTone(610);
                     r="6"
                   >
                     <animateMotion
-                      dur="1.85s"
+                      dur="1.60s"
                       repeatCount="indefinite"
                     >
                       <mpath href="#burn1-orange-route-2" />
@@ -1725,15 +1986,28 @@ playTone(610);
 
                   <circle
                     className="burn1-tracker orange tertiary"
-                    r="5"
+                    r="6"
                   >
                     <animateMotion
-                      dur="2.15s"
+                      dur="1.82s"
                       repeatCount="indefinite"
                     >
                       <mpath href="#burn1-orange-route-3" />
                     </animateMotion>
                   </circle>
+
+                  <circle
+                    className="burn1-tracker orange quaternary"
+                    r="6"
+                  >
+                    <animateMotion
+                      dur="2.02s"
+                      repeatCount="indefinite"
+                    >
+                      <mpath href="#burn1-orange-route-4" />
+                    </animateMotion>
+                  </circle>
+
                 </g>
               </svg>
             )}
