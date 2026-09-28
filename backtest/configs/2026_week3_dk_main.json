@@ -1,0 +1,10 @@
+{
+  "backtest_id": "2026-week3-dk-main-smoke-test",
+  "season": 2026,
+  "week": 3,
+  "site": "dk",
+  "slate_type": "sunday_main",
+  "candidate_count": 200,
+  "lineup_count": 20,
+  "notes": "Pipeline smoke test only. Uses DK AvgPointsPerGame as temporary optimizer input. Not a valid historical performance evaluation."
+}

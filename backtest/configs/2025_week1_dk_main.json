@@ -1,0 +1,10 @@
+﻿{
+  "backtest_id": "2025-week1-dk-main",
+  "season": 2025,
+  "week": 1,
+  "site": "dk",
+  "slate_type": "sunday_main",
+  "candidate_count": 200,
+  "lineup_count": 20,
+  "notes": "Initial BURN1 historical replay configuration. Historical salary/slate file pending licensed source."
+}
