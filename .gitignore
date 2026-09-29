@@ -10,7 +10,8 @@ data/historical/nfl/*.mp4
 data/historical/nfl/*.jpg
 data/historical/nfl/*.pdf
 data/historical/nfl/*.docx
-data/historical/nfl/*.htmlmodeling/output/
+data/historical/nfl/*.html
+modeling/output/
 modeling/artifacts/
 
 # Generated modeling artifacts
@@ -25,3 +26,18 @@ data/live/
 data/snapshots/
 data/runs/
 data/backtests/
+
+# Public-repository exclusions: third-party/derived DFS data and generated artifacts
+backtest/data/dk/
+backtest/data/fd/
+backtest/results/
+backtest/reports/
+backtest/experiments/output/
+backtest/models/**/*.joblib
+
+# Local development backups and source dumps
+*.bak
+*.backup-*
+BURN1 full
+BURN1_V13_MAP.txt
+burn1_app_source.txt
